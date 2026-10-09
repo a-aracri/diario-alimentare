@@ -1,8 +1,8 @@
 import { ChevronRightIcon, PencilLineIcon, SearchIcon, StarIcon, XIcon } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { searchFoods, sortByName } from '@/lib/foods'
+import { groupLabelAt, searchFoods, sortForList } from '@/lib/foods'
 import { formatPortion } from '@/lib/units'
 import { cn } from '@/lib/utils'
 import { CATEGORY_LABEL } from '@/model/constants'
@@ -25,7 +25,7 @@ export function FoodPicker({ foods, recentIds, acuteMode, onPick, onFreeText }: 
 
   const byId = useMemo(() => new Map(foods.map((f) => [f.id, f])), [foods])
   const results = useMemo(() => searchFoods(foods, query), [foods, query])
-  const favorites = useMemo(() => sortByName(foods.filter((f) => f.favorite)), [foods])
+  const favorites = useMemo(() => sortForList(foods.filter((f) => f.favorite)), [foods])
   const recents = useMemo(
     () =>
       recentIds
@@ -40,7 +40,7 @@ export function FoodPicker({ foods, recentIds, acuteMode, onPick, onFreeText }: 
     return (Object.keys(CATEGORY_LABEL) as FoodCategory[]).filter((c) => counts.get(c))
   }, [foods])
   const inCategory = useMemo(
-    () => (category ? sortByName(foods.filter((f) => f.category === category)) : []),
+    () => (category ? sortForList(foods.filter((f) => f.category === category)) : []),
     [foods, category],
   )
 
@@ -106,7 +106,19 @@ export function FoodPicker({ foods, recentIds, acuteMode, onPick, onFreeText }: 
               ‹ Categorie
             </Button>
             <h3 className="px-1 pb-1 text-sm font-medium">{CATEGORY_LABEL[category]}</h3>
-            {inCategory.map(row)}
+            {inCategory.map((food, i) => {
+              const label = groupLabelAt(inCategory, i)
+              return (
+                <Fragment key={food.id}>
+                  {label && (
+                    <h4 className="px-1 pt-3 pb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                      {label}
+                    </h4>
+                  )}
+                  {row(food)}
+                </Fragment>
+              )
+            })}
           </div>
         ) : (
           <div className="space-y-4">

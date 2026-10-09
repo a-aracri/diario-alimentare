@@ -5,7 +5,7 @@ import { foods } from '@/test/fixtures'
 import type { Supplement } from '@/model/types'
 import { toCSV } from './csv'
 import { addDays, dateRange, diffDays, guessMeal, isBackupDue, weekStart } from './dates'
-import { searchFoods } from './foods'
+import { groupLabelAt, searchFoods, sortForList } from './foods'
 import { isReminderDue, supplementStatus } from './supplements'
 
 describe('dati del piano', () => {
@@ -116,5 +116,28 @@ describe('pasto suggerito', () => {
     expect(guessMeal('13:10')).toBe('pranzo')
     expect(guessMeal('16:00')).toBe('spuntino-pomeriggio')
     expect(guessMeal('23:00')).toBe('fuori-pasto')
+  })
+})
+
+describe('ordine delle liste di alimenti', () => {
+  const verdure = foods.filter((f) => f.category === 'verdure')
+  const sorted = sortForList(verdure)
+
+  it('mette prima i consentiti, poi da verificare, in fondo da evitare', () => {
+    const groups = sorted.map((f) => f.status === 'evitare' ? 2 : f.status === 'verificare' ? 1 : 0)
+    expect(groups).toEqual([...groups].sort((a, b) => a - b))
+    expect(sorted.at(-1)?.status).toBe('evitare')
+    expect(sorted[0].status).not.toBe('evitare')
+  })
+
+  it('è alfabetico dentro ogni gruppo, con permessi e con limite insieme', () => {
+    const allowed = sorted.filter((f) => f.status === 'permesso' || f.status === 'limite').map((f) => f.name)
+    expect(allowed).toEqual([...allowed].sort((a, b) => a.localeCompare(b, 'it')))
+    expect(allowed.slice(0, 3)).toEqual(['Bietole', 'Broccoli (solo teste)', 'Cappuccina'])
+  })
+
+  it('mostra un’etichetta solo dove cambia gruppo', () => {
+    const labels = sorted.map((_, i) => groupLabelAt(sorted, i)).filter(Boolean)
+    expect(labels).toEqual(['Da verificare', 'Da evitare'])
   })
 })

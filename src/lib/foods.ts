@@ -77,3 +77,39 @@ export function searchFoods(foods: Food[], query: string, limit = 50): Food[] {
 export function sortByName(foods: Food[]): Food[] {
   return [...foods].sort((a, b) => a.name.localeCompare(b.name, 'it'))
 }
+
+/** Gruppi delle liste di alimenti: i consentiti (permessi e con limite) vengono prima. */
+export type FoodGroup = 'consentiti' | 'verificare' | 'evitare'
+
+const GROUP_ORDER: FoodGroup[] = ['consentiti', 'verificare', 'evitare']
+
+export const FOOD_GROUP_LABEL: Record<FoodGroup, string> = {
+  consentiti: 'Consentiti',
+  verificare: 'Da verificare',
+  evitare: 'Da evitare',
+}
+
+export function foodGroup(food: Food): FoodGroup {
+  if (food.status === 'evitare') return 'evitare'
+  if (food.status === 'verificare') return 'verificare'
+  return 'consentiti'
+}
+
+/**
+ * Ordine nelle liste: prima i consentiti, poi quelli da verificare, in fondo
+ * quelli da evitare; alfabetico dentro ogni gruppo.
+ */
+export function sortForList(foods: Food[]): Food[] {
+  return [...foods].sort(
+    (a, b) =>
+      GROUP_ORDER.indexOf(foodGroup(a)) - GROUP_ORDER.indexOf(foodGroup(b)) ||
+      a.name.localeCompare(b.name, 'it'),
+  )
+}
+
+/** Etichetta da mostrare prima di `foods[i]` se lì inizia un nuovo gruppo (non per il primo). */
+export function groupLabelAt(foods: Food[], i: number): string | undefined {
+  if (i === 0) return undefined
+  const group = foodGroup(foods[i])
+  return group !== foodGroup(foods[i - 1]) ? FOOD_GROUP_LABEL[group] : undefined
+}

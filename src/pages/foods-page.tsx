@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Textarea } from '@/components/ui/textarea'
 import { useFoods } from '@/hooks/use-data'
-import { searchFoods, sortByName } from '@/lib/foods'
+import { groupLabelAt, searchFoods, sortForList } from '@/lib/foods'
 import { formatPortion, parseQuantity, quantityText } from '@/lib/units'
 import { cn } from '@/lib/utils'
 import { CATEGORY_LABEL, STATUS_LABEL, UNITS } from '@/model/constants'
@@ -43,9 +43,14 @@ export function FoodsPage() {
     let list = foods ?? []
     if (status) list = list.filter((f) => f.status === status)
     if (onlyMine) list = list.filter((f) => f.custom || f.favorite)
-    if (query.trim()) return [{ category: null, foods: searchFoods(list, query, 200) }]
+    // Nella ricerca contano prima i risultati più pertinenti; nelle categorie i vietati vanno in fondo.
+    if (query.trim()) return [{ category: null, foods: searchFoods(list, query, 200), grouped: false }]
     return (Object.keys(CATEGORY_LABEL) as FoodCategory[])
-      .map((category) => ({ category, foods: sortByName(list.filter((f) => f.category === category)) }))
+      .map((category) => ({
+        category,
+        foods: sortForList(list.filter((f) => f.category === category)),
+        grouped: true,
+      }))
       .filter((g) => g.foods.length)
   }, [foods, query, status, onlyMine])
 
@@ -102,30 +107,38 @@ export function FoodsPage() {
           {g.category && <SectionTitle>{CATEGORY_LABEL[g.category]}</SectionTitle>}
           <Card size="sm" className="py-1">
             <ul className="divide-y">
-              {g.foods.map((f) => (
-                <li key={f.id}>
-                  <button
-                    type="button"
-                    onClick={() => setDrawer({ open: true, food: f })}
-                    className="flex min-h-12 w-full items-center gap-2 px-3 py-2 text-left hover:bg-muted"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm leading-snug">
-                        {f.name}
-                        {f.favorite && <StarIcon className="ml-1 inline size-3.5 fill-amber-400 text-amber-500" />}
-                      </span>
-                      {(f.maxPortion || f.custom) && (
-                        <span className="block text-xs text-muted-foreground">
-                          {[f.maxPortion && `max ${formatPortion(f.maxPortion)}`, f.custom && 'personale']
-                            .filter(Boolean)
-                            .join(' · ')}
+              {g.foods.map((f, i) => {
+                const label = g.grouped ? groupLabelAt(g.foods, i) : undefined
+                return (
+                  <li key={f.id}>
+                    {label && (
+                      <p className="border-b bg-muted/50 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+                        {label}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setDrawer({ open: true, food: f })}
+                      className="flex min-h-12 w-full items-center gap-2 px-3 py-2 text-left hover:bg-muted"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm leading-snug">
+                          {f.name}
+                          {f.favorite && <StarIcon className="ml-1 inline size-3.5 fill-amber-400 text-amber-500" />}
                         </span>
-                      )}
-                    </span>
-                    <StatusBadge status={f.status} />
-                  </button>
-                </li>
-              ))}
+                        {(f.maxPortion || f.custom) && (
+                          <span className="block text-xs text-muted-foreground">
+                            {[f.maxPortion && `max ${formatPortion(f.maxPortion)}`, f.custom && 'personale']
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </span>
+                        )}
+                      </span>
+                      <StatusBadge status={f.status} />
+                    </button>
+                  </li>
+                )
+              })}
             </ul>
           </Card>
         </section>
