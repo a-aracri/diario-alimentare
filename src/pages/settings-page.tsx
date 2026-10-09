@@ -1,6 +1,6 @@
 import { DownloadIcon, MonitorSmartphoneIcon, MoonIcon, SunIcon, UploadIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { exportBackupFile } from '@/components/backup'
 import { Page } from '@/components/page'
@@ -103,7 +103,7 @@ export function SettingsPage() {
         <CardContent className="space-y-3">
           {LIMIT_FIELDS.map((f) => (
             <LimitInput
-              key={f.key}
+              key={`${f.key}-${settings.limits[f.key]}`}
               id={`limit-${f.key}`}
               label={f.label}
               hint={f.hint}
@@ -241,7 +241,7 @@ export function SettingsPage() {
   )
 }
 
-/** Campo numerico salvato all'uscita, per non scrivere a ogni tasto. */
+/** Campo numerico salvato all'uscita; si rimonta (key) quando il valore salvato cambia. */
 function LimitInput({
   id,
   label,
@@ -256,7 +256,6 @@ function LimitInput({
   onChange: (value: number) => void
 }) {
   const [text, setText] = useState(String(value))
-  useEffect(() => setText(String(value)), [value])
   return (
     <Field orientation="horizontal" className="justify-between">
       <div className="min-w-0">

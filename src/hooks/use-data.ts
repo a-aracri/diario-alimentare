@@ -45,16 +45,8 @@ export function useSymptoms(date: ISODate) {
   return useLiveQuery(() => repo.symptoms.byDate(date), [date])
 }
 
-export function useSymptomsRange(from: ISODate, to: ISODate) {
-  return useLiveQuery(() => repo.symptoms.byRange(from, to), [from, to])
-}
-
 export function useDayLog(date: ISODate) {
   return useLiveQuery(async () => (await repo.dayLogs.get(date)) ?? null, [date])
-}
-
-export function useDayLogsRange(from: ISODate, to: ISODate) {
-  return useLiveQuery(() => repo.dayLogs.byRange(from, to), [from, to])
 }
 
 export function useSupplements() {
@@ -63,10 +55,6 @@ export function useSupplements() {
 
 export function useSupplementLogs(date: ISODate) {
   return useLiveQuery(() => repo.supplements.logsByDate(date), [date])
-}
-
-export function useSupplementLogsRange(from: ISODate, to: ISODate) {
-  return useLiveQuery(() => repo.supplements.logsByRange(from, to), [from, to])
 }
 
 export function useReintroTests() {

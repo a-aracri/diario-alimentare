@@ -2,7 +2,6 @@ import {
   Drawer,
   DrawerContent,
   DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer'
@@ -13,7 +12,6 @@ interface FormDrawerProps {
   onOpenChange: (open: boolean) => void
   title: React.ReactNode
   description?: React.ReactNode
-  footer?: React.ReactNode
   /** Classi per il contenitore del drawer, es. un'altezza fissa. */
   className?: string
   bodyClassName?: string
@@ -22,7 +20,7 @@ interface FormDrawerProps {
 
 /**
  * Drawer dal basso per i moduli di inserimento (preferito ai Dialog su mobile).
- * Il contenuto scorre, il footer resta visibile sopra la safe area.
+ * Il contenuto scorre; i pulsanti stanno in fondo al modulo, sopra la safe area.
  * Il contenuto viene montato a ogni apertura, quindi lo stato interno riparte pulito.
  */
 export function FormDrawer({
@@ -30,7 +28,6 @@ export function FormDrawer({
   onOpenChange,
   title,
   description,
-  footer,
   className,
   bodyClassName,
   children,
@@ -38,18 +35,13 @@ export function FormDrawer({
   return (
     <Drawer open={open} onOpenChange={onOpenChange} showSwipeHandle>
       <DrawerContent className={className}>
-        <DrawerHeader className="text-left md:text-left">
+        <DrawerHeader>
           <DrawerTitle className="text-lg">{title}</DrawerTitle>
-          {description && <DrawerDescription className="text-left">{description}</DrawerDescription>}
+          {description && <DrawerDescription>{description}</DrawerDescription>}
         </DrawerHeader>
         <div className={cn('min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4', bodyClassName)}>
           {children}
         </div>
-        {footer && (
-          <DrawerFooter className="border-t pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-            {footer}
-          </DrawerFooter>
-        )}
       </DrawerContent>
     </Drawer>
   )

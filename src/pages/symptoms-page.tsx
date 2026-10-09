@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 import { DateNav } from '@/components/date-nav'
 import { Page, SectionTitle } from '@/components/page'
@@ -11,7 +11,7 @@ import { useSelectedDate } from '@/hooks/selected-date'
 import { symptomLabel } from '@/lib/report'
 import { cn } from '@/lib/utils'
 import { BRISTOL, SYMPTOMS } from '@/model/constants'
-import type { DayLog, ISODate, Symptom, SymptomType } from '@/model/types'
+import type { ISODate, Symptom, SymptomType } from '@/model/types'
 import { repo } from '@/repo'
 
 export function SymptomsPage() {
@@ -105,7 +105,7 @@ export function SymptomsPage() {
       )}
 
       <SectionTitle>Note della giornata</SectionTitle>
-      <DayNote key={date} date={date} dayLog={dayLog} />
+      {dayLog !== undefined && <DayNote key={date} date={date} initial={dayLog?.note ?? ''} />}
 
       <SymptomDrawer
         open={drawer.open}
@@ -119,12 +119,9 @@ export function SymptomsPage() {
 }
 
 /** Note libere della giornata, salvate quando si esce dal campo. */
-function DayNote({ date, dayLog }: { date: ISODate; dayLog: DayLog | null | undefined }) {
-  const [text, setText] = useState('')
-  const loaded = dayLog !== undefined
-  useEffect(() => {
-    if (loaded) setText(dayLog?.note ?? '')
-  }, [loaded, dayLog?.note])
+function DayNote({ date, initial }: { date: ISODate; initial: string }) {
+  const [text, setText] = useState(initial)
+  const [saved, setSaved] = useState(initial)
 
   return (
     <Textarea
@@ -133,7 +130,10 @@ function DayNote({ date, dayLog }: { date: ISODate; dayLog: DayLog | null | unde
       value={text}
       onChange={(e) => setText(e.target.value)}
       onBlur={() => {
-        if ((dayLog?.note ?? '') !== text.trim()) repo.dayLogs.update(date, { note: text.trim() || undefined })
+        const note = text.trim()
+        if (note === saved) return
+        setSaved(note)
+        repo.dayLogs.update(date, { note: note || undefined })
       }}
     />
   )

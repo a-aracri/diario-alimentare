@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { useReportData, useSettings } from '@/hooks/use-data'
 import { navigate } from '@/hooks/use-route'
 import { useSelectedDate } from '@/hooks/selected-date'
-import { addDays, formatFull, formatLong, today, weekStart } from '@/lib/dates'
+import { addDays, formatFull, formatLong, parseISODate, today, weekStart } from '@/lib/dates'
 import { shareOrDownload } from '@/lib/files'
 import { buildFoodIndex } from '@/lib/foods'
 import { weekAdherence } from '@/lib/limits'
@@ -38,7 +38,7 @@ export function SummaryPage() {
     }
   }, [data, settings, from, to])
 
-  const label = `${rangeFmt.format(new Date(`${from}T00:00`))} – ${rangeFmt.format(new Date(`${to}T00:00`))}`
+  const label = `${rangeFmt.format(parseISODate(from))} – ${rangeFmt.format(parseISODate(to))}`
   const isCurrent = from === weekStart(today())
 
   return (

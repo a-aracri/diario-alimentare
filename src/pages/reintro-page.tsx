@@ -12,7 +12,7 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Textarea } from '@/components/ui/textarea'
 import { DEFAULT_REINTRO_DAYS, DEFAULT_REINTRO_GROUPS } from '@/data/piano'
 import { useReintroTests, useSettings } from '@/hooks/use-data'
-import { addDays, formatFull, formatShort, today } from '@/lib/dates'
+import { addDays, formatDateTime, formatShort, today } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 import { REINTRO_RESULT_LABEL } from '@/model/constants'
 import type { ReintroDay, ReintroResult, ReintroTest } from '@/model/types'
@@ -293,7 +293,7 @@ function TestForm({
           </Button>
         )}
       </div>
-      {test && <p className="text-xs text-muted-foreground">Creato il {formatFull(test.createdAt.slice(0, 10))}</p>}
+      {test && <p className="text-xs text-muted-foreground">Creato il {formatDateTime(test.createdAt)}</p>}
     </div>
   )
 }

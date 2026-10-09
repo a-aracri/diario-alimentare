@@ -81,7 +81,7 @@ export function evaluateEntry({
       out.push({
         code: 'acuta',
         level: 'warning',
-        message: `Fase acuta attiva: ${labels.join(', ')} sono sconsigliati in questo periodo.`,
+        message: `Fase acuta attiva: in questo periodo sono sconsigliati ${labels.join(', ')}.`,
       })
     }
   }
