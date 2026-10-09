@@ -47,6 +47,11 @@ export default function App() {
     navigator.storage?.persist?.().catch(() => {})
   }, [])
 
+  // Ogni pagina si apre dall'inizio.
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [route.path])
+
   if (state === 'error') {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center">

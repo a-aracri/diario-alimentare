@@ -39,7 +39,7 @@ export function IdeasPage() {
           {s.hint && <p className="text-sm text-muted-foreground">{s.hint}</p>}
           {s.recipe && (
             <details className="group rounded-lg border px-3">
-              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-medium">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-medium [&::-webkit-details-marker]:hidden">
                 Ricetta{s.recipe.servings ? ` (${s.recipe.servings})` : ''}
                 <span className="text-muted-foreground group-open:rotate-180">⌄</span>
               </summary>

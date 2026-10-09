@@ -10,7 +10,7 @@ export function AcuteBanner() {
       <AlertTitle>Fase acuta gastrite/reflusso attiva</AlertTitle>
       <AlertDescription className="text-foreground/80">
         <details className="group">
-          <summary className="flex min-h-9 cursor-pointer list-none items-center underline underline-offset-3">
+          <summary className="flex min-h-9 cursor-pointer list-none items-center underline underline-offset-3 [&::-webkit-details-marker]:hidden">
             <span className="group-open:hidden">Mostra i consigli</span>
             <span className="hidden group-open:inline">Nascondi i consigli</span>
           </summary>

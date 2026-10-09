@@ -147,6 +147,15 @@ function SupplementForm({ supplement, onClose }: { supplement?: Supplement; onCl
             <Field>
               <FieldLabel htmlFor="supp-start">Dal</FieldLabel>
               <Input id="supp-start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              {settings?.dietStartDate && settings.dietStartDate !== startDate && (
+                <Button
+                  variant="link"
+                  className="h-auto justify-start px-0 text-xs"
+                  onClick={() => setStartDate(settings.dietStartDate!)}
+                >
+                  Usa l’inizio della dieta ({formatFull(settings.dietStartDate)})
+                </Button>
+              )}
             </Field>
             <Field>
               <FieldLabel htmlFor="supp-duration">Durata (giorni)</FieldLabel>
