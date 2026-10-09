@@ -206,3 +206,16 @@ export function adherenceLines(a: WeekAdherence, limits: Limits): AdherenceLine[
     },
   ]
 }
+
+/**
+ * Impronta dei dati di un intervallo: cambia quando cambia qualcosa che finisce
+ * nel documento, così il file condiviso viene rigenerato solo quando serve.
+ */
+export function reportSignature(data: ReportData, extra = ''): string {
+  const latest = (rows: { updatedAt: string }[]) =>
+    rows.reduce((max, r) => (r.updatedAt > max ? r.updatedAt : max), '')
+  const parts = [data.entries, data.symptoms, data.dayLogs, data.supplements, data.supplementLogs, data.foods].map(
+    (rows) => `${rows.length}:${latest(rows)}`,
+  )
+  return [...parts, extra].join('|')
+}

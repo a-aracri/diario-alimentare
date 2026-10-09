@@ -1,8 +1,8 @@
-import { DownloadIcon, MonitorSmartphoneIcon, MoonIcon, SunIcon, UploadIcon } from 'lucide-react'
+import { MonitorSmartphoneIcon, MoonIcon, SunIcon, UploadIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { exportBackupFile } from '@/components/backup'
+import { BackupButton } from '@/components/backup'
 import { Page } from '@/components/page'
 import {
   AlertDialog,
@@ -158,9 +158,7 @@ export function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
-          <Button className="h-11 w-full" onClick={exportBackupFile}>
-            <DownloadIcon /> Esporta backup completo (JSON)
-          </Button>
+          <BackupButton className="w-full" />
           <Button variant="outline" className="h-11 w-full" onClick={() => fileInput.current?.click()}>
             <UploadIcon /> Ripristina da un file
           </Button>

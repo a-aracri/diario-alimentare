@@ -1,4 +1,4 @@
-import { ChevronRightIcon, DatabaseIcon, FlaskConicalIcon, PillIcon, SettingsIcon } from 'lucide-react'
+import { ChevronRightIcon, DatabaseIcon, FlaskConicalIcon, PillIcon, SettingsIcon, ShareIcon } from 'lucide-react'
 import { Page } from '@/components/page'
 import { Card } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
@@ -8,6 +8,12 @@ import { formatDateTime } from '@/lib/dates'
 import { repo } from '@/repo'
 
 const LINKS = [
+  {
+    to: '/riepilogo?condividi=1',
+    label: 'Condividi il diario',
+    description: 'PDF di un periodo da inviare alla nutrizionista',
+    icon: ShareIcon,
+  },
   { to: '/integratori', label: 'Integratori', description: 'Checklist, durata e promemoria', icon: PillIcon },
   {
     to: '/reintroduzione',

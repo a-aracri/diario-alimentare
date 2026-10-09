@@ -55,4 +55,11 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
+  build: {
+    rolldownOptions: {
+      // Dipendenze opzionali di jsPDF (servono solo per doc.html/svg, non usati):
+      // restano fuori dal bundle e dalla cache offline.
+      external: ['html2canvas', 'dompurify', 'canvg'],
+    },
+  },
 })

@@ -27,11 +27,10 @@ const KEY: Record<TableName, string> = {
 
 export class BackupError extends Error {}
 
+/** Tutte le tabelle. Senza transazione esplicita: si può usare anche dentro useLiveQuery. */
 export async function exportBackup(): Promise<BackupFile> {
-  const data = {} as Record<TableName, unknown[]>
-  await db.transaction('r', TABLES.map((t) => db.table(t)), async () => {
-    for (const t of TABLES) data[t] = await db.table(t).toArray()
-  })
+  const rows = await Promise.all(TABLES.map((t) => db.table(t).toArray()))
+  const data = Object.fromEntries(TABLES.map((t, i) => [t, rows[i]])) as Record<TableName, unknown[]>
   return { app: BACKUP_APP, version: BACKUP_VERSION, exportedAt: nowISO(), data }
 }
 

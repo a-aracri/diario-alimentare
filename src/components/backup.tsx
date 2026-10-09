@@ -1,30 +1,68 @@
-import { DatabaseBackupIcon } from 'lucide-react'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { DatabaseBackupIcon, DownloadIcon } from 'lucide-react'
+import { useMemo } from 'react'
 import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { useSettings } from '@/hooks/use-data'
 import { isBackupDue, today } from '@/lib/dates'
-import { shareOrDownload } from '@/lib/files'
+import { shareFile } from '@/lib/files'
+import { cn } from '@/lib/utils'
 import { repo } from '@/repo'
 
-/** Esporta tutti i dati in JSON e aggiorna la data dell'ultimo backup. */
-export async function exportBackupFile(): Promise<void> {
-  try {
-    const backup = await repo.backup.export()
-    const result = await shareOrDownload(
-      `diario-fodmap-backup-${today()}.json`,
-      JSON.stringify(backup, null, 2),
-      'application/json',
-    )
-    if (result === 'cancelled') return
-    await repo.settings.update({ lastBackupAt: backup.exportedAt })
-    toast.success('Backup esportato', {
-      description: 'Conservalo in un posto sicuro, ad esempio in File o iCloud Drive.',
-    })
-  } catch (err) {
-    console.error(err)
-    toast.error('Esportazione non riuscita')
-  }
+/**
+ * File di backup sempre pronto e aggiornato: il tocco su "Esporta" può aprire
+ * subito il foglio di condivisione (su iPhone deve partire dal gesto).
+ */
+function useBackupFile() {
+  const backup = useLiveQuery(() => repo.backup.export(), [])
+  return useMemo(
+    () =>
+      backup && {
+        exportedAt: backup.exportedAt,
+        file: new File([JSON.stringify(backup, null, 2)], `diario-fodmap-backup-${today()}.json`, {
+          type: 'application/json',
+        }),
+      },
+    [backup],
+  )
+}
+
+/** Pulsante che esporta tutti i dati in JSON e aggiorna la data dell'ultimo backup. */
+export function BackupButton({
+  label = 'Esporta backup completo (JSON)',
+  variant = 'default',
+  className,
+}: {
+  label?: string
+  variant?: 'default' | 'outline'
+  className?: string
+}) {
+  const backup = useBackupFile()
+  return (
+    <Button
+      variant={variant}
+      className={cn('h-11', className)}
+      disabled={!backup}
+      onClick={async () => {
+        if (!backup) return
+        try {
+          // Nessuna attesa prima di shareFile: su iPhone la condivisione deve partire dal tocco.
+          const result = await shareFile(backup.file)
+          if (result === 'cancelled') return
+          await repo.settings.update({ lastBackupAt: backup.exportedAt })
+          toast.success('Backup esportato', {
+            description: 'Conservalo in un posto sicuro, ad esempio in File o iCloud Drive.',
+          })
+        } catch (err) {
+          console.error(err)
+          toast.error('Esportazione non riuscita')
+        }
+      }}
+    >
+      <DownloadIcon /> {label}
+    </Button>
+  )
 }
 
 /** Avviso se l'ultimo backup ha più di 7 giorni. */
@@ -39,9 +77,7 @@ export function BackupReminder() {
       </AlertTitle>
       <AlertDescription className="space-y-2 text-foreground/80">
         <p>I dati sono salvati solo su questo iPhone: esporta una copia di sicurezza.</p>
-        <Button variant="outline" className="h-10" onClick={exportBackupFile}>
-          Fai il backup ora
-        </Button>
+        <BackupButton label="Fai il backup ora" variant="outline" className="h-10" />
       </AlertDescription>
     </Alert>
   )
