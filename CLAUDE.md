@@ -25,6 +25,9 @@ Prima di un commit: `npm run lint && npm test && npm run build`.
   icone `lucide-react`, toast `sonner`, tema chiaro/scuro con `next-themes`.
 - Dati: Dexie (IndexedDB) + `dexie-react-hooks`.
 - PWA: `vite-plugin-pwa` (Workbox, `registerType: 'prompt'`).
+- PDF: `jspdf` + `jspdf-autotable`, caricati con import dinamico in `src/lib/pdf-report.ts`.
+  Le dipendenze opzionali di jsPDF (`html2canvas`, `dompurify`, `canvg`) sono escluse dal
+  bundle in `vite.config.ts`: non usare `doc.html()`/`doc.svg()`.
 - Test: Vitest, `fake-indexeddb` per i test del repository.
 
 ## Struttura
@@ -36,8 +39,11 @@ src/
   model/                tipi del dominio (types.ts) ed etichette/costanti (constants.ts)
   lib/                  logica pura e testata: date, unità, ricerca, limiti, avvisi,
                         integratori, CSV, riepiloghi; più helper browser (files.ts, pwa.ts)
+  lib/report-document.ts  modello unico del diario condiviso (PDF, vista stampabile, nome file)
+  lib/pdf-report.ts     render del modello in PDF (jsPDF)
   repo/                 layer di accesso ai dati (unico punto che usa Dexie)
-  hooks/                hook React: dati reattivi (use-data.ts), route, data selezionata
+  hooks/                hook React: dati reattivi (use-data.ts), route, data selezionata,
+                        file preparati in anticipo per la condivisione (use-prepared-file.ts)
   components/ui/        componenti shadcn generati dalla CLI
   components/           componenti dell'app (drawer, card, navigazione…)
   pages/                una pagina per route
@@ -74,6 +80,11 @@ Flusso: `pages/components → hooks/use-data.ts → repo → Dexie`. Le scrittur
   `pb-[env(safe-area-inset-bottom)]` in fondo al modulo.
 - `index.html` contiene i meta per la modalità standalone (`apple-mobile-web-app-*`,
   `viewport-fit=cover`, `theme-color`).
+- **Condivisione di file**: Safari apre il foglio di condivisione solo se `navigator.share`
+  parte direttamente dal tocco. Prepara il `File` in anticipo (`usePreparedFile` per il PDF,
+  `useMemo` per CSV e backup) e nel gestore del tocco chiama subito `shareFile(file)`, senza
+  `await` prima. `shareFile` ignora il doppio tocco e scarica il file dove la condivisione
+  non c'è (desktop).
 
 ### Dati e repository
 - Date locali `YYYY-MM-DD` e orari `HH:MM` (mai `toISOString()` per le date: è UTC). Usa
@@ -99,6 +110,21 @@ Flusso: `pages/components → hooks/use-data.ts → repo → Dexie`. Le scrittur
 - Latticini delattosati: più voci nello stesso pasto contano come una volta sola.
 - I limiti sono modificabili in Impostazioni (`settings.limits`); i valori del piano sono in
   `DEFAULT_LIMITS`.
+
+### Diario condiviso (PDF, stampa, CSV)
+- Drawer "Condividi il diario" (`components/share-diary-drawer.tsx`), raggiungibile da
+  Riepilogo e da Altro (`#/riepilogo?condividi=1`). Periodi rapidi che finiscono oggi; la data
+  "Al" non va oltre oggi.
+- `buildReportDocument` produce il contenuto per PDF e vista stampabile: modificare i testi lì,
+  non nei render. Testato in `report-document.test.ts`.
+- I limiti settimanali si valutano sulla settimana intera lunedì–domenica anche se il periodo ne
+  copre solo una parte: `useReportData` carica anche `weekEntries`. Le settimane senza alimenti
+  si saltano; i giorni vuoti consecutivi si uniscono.
+- Oggi e i giorni futuri non contano come integratori "non presi".
+- Il testo nel PDF passa da `pdfText`: Helvetica (WinAnsi) copre lettere accentate e
+  – — ‘ ’ “ ” … • €; il resto (emoji) viene tolto.
+- Impaginazione: un giorno non si spezza se sta in una pagina; se si spezza, la pagina nuova
+  ripete "giorno (continua)". Dopo modifiche al render, controlla con PDF di prova e `pdftotext`.
 
 ## Sincronizzazione futura (es. Neon)
 

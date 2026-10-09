@@ -62,28 +62,29 @@ export function PrintPage({ params }: { params: URLSearchParams }) {
             </section>
           )}
 
-          {doc.weeks.map((w) => (
-            <section key={w.title} className="break-inside-avoid space-y-2 rounded-lg border border-neutral-300 p-3">
-              <h2 className="font-semibold">Limiti del piano · {w.title}</h2>
-              {w.lines.length === 0 && (
-                <p className="text-neutral-500">Nessun alimento registrato in questa settimana.</p>
-              )}
-              <ul className="grid gap-1">
-                {w.lines.map((l) => (
-                  <li key={l.id} className="flex items-start gap-2">
-                    <span
-                      aria-hidden
-                      className={`mt-1.5 size-2 shrink-0 rounded-full ${l.ok ? 'bg-emerald-600' : 'bg-amber-600'}`}
-                    />
-                    <span>
-                      <strong>{l.label}:</strong> {l.detail}
-                      <span className="sr-only">{l.ok ? ' (rispettato)' : ' (da rivedere)'}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
+          {doc.weeks.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="font-semibold">Limiti del piano</h2>
+              {doc.weeks.map((w) => (
+                <div key={w.title} className="break-inside-avoid space-y-1 rounded-lg border border-neutral-300 p-3">
+                  <h3 className="font-medium">{w.title}</h3>
+                  {w.note && <p className="text-xs text-neutral-500">{w.note}</p>}
+                  <ul className="grid gap-1">
+                    {w.lines.map((l) => (
+                      <li key={l.id} className="grid grid-cols-[5.5rem_1fr] gap-2">
+                        <span className={`font-semibold ${l.ok ? 'text-emerald-800' : 'text-amber-800'}`}>
+                          {l.ok ? 'OK' : 'Da rivedere'}
+                        </span>
+                        <span>
+                          <strong>{l.label}:</strong> {l.detail}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </section>
-          ))}
+          )}
 
           {doc.days.map((day) => (
             <section key={day.date} className="break-inside-avoid space-y-2">
@@ -119,7 +120,7 @@ export function PrintPage({ params }: { params: URLSearchParams }) {
               {day.noSymptoms && <p className="font-medium text-emerald-700">Nessun sintomo.</p>}
               {day.symptoms.length > 0 && (
                 <div>
-                  <p className="font-medium">Sintomi e feci</p>
+                  <p className="font-medium">{day.symptomsTitle}</p>
                   <ul className="list-disc pl-5">
                     {day.symptoms.map((s) => (
                       <li key={s}>{s}</li>

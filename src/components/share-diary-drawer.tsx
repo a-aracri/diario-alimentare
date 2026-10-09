@@ -11,8 +11,9 @@ import { addDays, dateRange, diffDays, today } from '@/lib/dates'
 import { shareFile, UTF8_BOM } from '@/lib/files'
 import { renderReportPdf } from '@/lib/pdf-report'
 import { buildCSV, reportSignature } from '@/lib/report'
-import { buildReportDocument, periodLabel } from '@/lib/report-document'
+import { buildReportDocument, capitalize, periodLabel, reportFileName } from '@/lib/report-document'
 import type { ISODate, Settings } from '@/model/types'
+import { cn } from '@/lib/utils'
 import { FormDrawer } from './form-drawer'
 
 interface ShareDiaryDrawerProps {
@@ -77,10 +78,9 @@ function ShareDiaryForm() {
   })
 
   const csv = useMemo(() => {
-    if (!valid || !data || !settings) return null
-    const name = buildReportDocument(data, from, to, { settings }).fileName
-    return new File([UTF8_BOM + buildCSV(data, from, to)], `${name}.csv`, { type: 'text/csv' })
-  }, [valid, data, settings, from, to])
+    if (!valid || !data) return null
+    return new File([UTF8_BOM + buildCSV(data, from, to)], `${reportFileName(from, to)}.csv`, { type: 'text/csv' })
+  }, [valid, data, from, to])
 
   const counts = useMemo(() => {
     if (!data || !valid) return null
@@ -97,13 +97,16 @@ function ShareDiaryForm() {
       <fieldset className="space-y-3">
         <legend className="pb-2 text-sm font-medium">Periodo</legend>
         <div className="grid grid-cols-2 gap-2">
-          {options.map((p) => (
+          {options.map((p, i) => (
             <Button
               key={p.id}
               type="button"
               variant={activePreset === p.id ? 'default' : 'outline'}
               aria-pressed={activePreset === p.id}
-              className="h-auto min-h-11 py-2 whitespace-normal"
+              className={cn(
+                'h-auto min-h-11 py-2 whitespace-normal',
+                options.length % 2 === 1 && i === options.length - 1 && 'col-span-2',
+              )}
               onClick={() => setChosen({ from: p.from, to: p.to })}
             >
               {p.label}
@@ -118,7 +121,10 @@ function ShareDiaryForm() {
               type="date"
               value={from}
               max={to}
-              onChange={(e) => e.target.value && setChosen({ from: e.target.value, to })}
+              onChange={(e) => {
+                const v = e.target.value
+                if (v) setChosen({ from: v > t ? t : v, to })
+              }}
             />
           </Field>
           <Field>
@@ -128,13 +134,18 @@ function ShareDiaryForm() {
               type="date"
               value={to}
               min={from}
-              onChange={(e) => e.target.value && setChosen({ from, to: e.target.value })}
+              max={t}
+              onChange={(e) => {
+                // Safari non sempre applica max nel selettore: niente giorni futuri.
+                const v = e.target.value
+                if (v) setChosen({ from, to: v > t ? t : v })
+              }}
             />
           </Field>
         </div>
         {valid ? (
           <p className="text-sm text-muted-foreground">
-            <span className="text-foreground first-letter:uppercase">{periodLabel(from, to)}</span>
+            <span className="block text-foreground">{capitalize(periodLabel(from, to))}</span>
             {counts && <span className="block text-xs">{counts}</span>}
           </p>
         ) : (

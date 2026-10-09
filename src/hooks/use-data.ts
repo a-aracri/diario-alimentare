@@ -61,17 +61,26 @@ export function useReintroTests() {
   return useLiveQuery(() => repo.reintro.all(), [])
 }
 
-/** Tutti i dati necessari per riepilogo, stampa ed export di un intervallo. */
+/**
+ * Tutti i dati necessari per riepilogo, stampa ed export di un intervallo.
+ * Le voci delle settimane intere servono ai limiti settimanali.
+ */
 export function useReportData(from: ISODate, to: ISODate): ReportData | undefined {
   return useLiveQuery(async () => {
-    const [entries, symptoms, dayLogs, supplements, supplementLogs, foods] = await Promise.all([
-      repo.entries.byRange(from, to),
+    const [weekEntries, symptoms, dayLogs, supplements, supplementLogs, foods] = await Promise.all([
+      repo.entries.byRange(weekStart(from), weekEnd(to)),
       repo.symptoms.byRange(from, to),
       repo.dayLogs.byRange(from, to),
       repo.supplements.all(),
       repo.supplements.logsByRange(from, to),
       repo.foods.all(),
     ])
-    return { entries, symptoms, dayLogs, supplements, supplementLogs, foods }
+    const entries = weekEntries.filter((e) => e.date >= from && e.date <= to)
+    return { entries, weekEntries, symptoms, dayLogs, supplements, supplementLogs, foods }
   }, [from, to])
+}
+
+/** Copia completa del database per il backup; si aggiorna a ogni modifica. */
+export function useBackupData() {
+  return useLiveQuery(() => repo.backup.export(), [])
 }

@@ -1,10 +1,9 @@
-import { useLiveQuery } from 'dexie-react-hooks'
 import { DatabaseBackupIcon, DownloadIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { useSettings } from '@/hooks/use-data'
+import { useBackupData, useSettings } from '@/hooks/use-data'
 import { isBackupDue, today } from '@/lib/dates'
 import { shareFile } from '@/lib/files'
 import { cn } from '@/lib/utils'
@@ -15,7 +14,7 @@ import { repo } from '@/repo'
  * subito il foglio di condivisione (su iPhone deve partire dal gesto).
  */
 function useBackupFile() {
-  const backup = useLiveQuery(() => repo.backup.export(), [])
+  const backup = useBackupData()
   return useMemo(
     () =>
       backup && {

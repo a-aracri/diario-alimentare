@@ -2,14 +2,15 @@
  * Documento leggibile del diario per un intervallo di date, indipendente dal
  * formato: lo usano sia il PDF da condividere sia la vista stampabile.
  */
-import { BRISTOL, MEAL_LABEL, STATUS_LABEL, SYMPTOM_LABEL } from '@/model/constants'
-import type { ISODate, Limits, Settings, SymptomType } from '@/model/types'
+import { BRISTOL, MEAL_LABEL, MEALS, STATUS_LABEL, SYMPTOM_LABEL } from '@/model/constants'
+import type { Entry, ISODate, Limits, Settings, SymptomType } from '@/model/types'
 import {
   addDays,
   dateRange,
   diffDays,
   formatFull,
   formatLong,
+  formatShort,
   parseISODate,
   today,
   weekStart,
@@ -34,6 +35,8 @@ export interface ReportDaySection {
   date: ISODate
   title: string
   rows: ReportRow[]
+  /** Titolo della parte sintomi: "Sintomi", "Feci" o "Sintomi e feci". */
+  symptomsTitle: string
   symptoms: string[]
   noSymptoms: boolean
   supplements: string[]
@@ -42,8 +45,10 @@ export interface ReportDaySection {
 }
 
 export interface ReportWeek {
+  /** Es. "Settimana dal 28 settembre al 4 ottobre 2026". */
   title: string
-  /** Vuoto se nella settimana non c'è nessun alimento registrato. */
+  /** Avvertenza se la settimana va oltre il periodo o non è finita. */
+  note?: string
   lines: AdherenceLine[]
 }
 
@@ -54,19 +59,19 @@ export interface ReportSummaryLine {
 
 export interface ReportDocument {
   title: string
-  /** Es. "dal 5 all'11 ottobre 2026". */
+  /** Es. "Dal 5 all'11 ottobre 2026". */
   period: string
   meta: string[]
   summary: ReportSummaryLine[]
   weeks: ReportWeek[]
   days: ReportDaySection[]
-  /** Nome del file senza estensione, es. "Diario alimentare 05-10-2026 - 11-10-2026". */
+  /** Nome del file senza estensione. */
   fileName: string
 }
 
 const MONTH = new Intl.DateTimeFormat('it-IT', { month: 'long' })
 
-function capitalize(text: string): string {
+export function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
@@ -96,18 +101,63 @@ export function periodLabel(from: ISODate, to: ISODate): string {
 
 const fileDate = (date: ISODate) => formatFull(date).replace(/\//g, '-')
 
-function supplementsSummary(data: ReportData, days: ISODate[]): ReportSummaryLine[] {
+/** Nome del file condiviso, es. "Diario alimentare 05-10-2026 - 11-10-2026". */
+export function reportFileName(from: ISODate, to: ISODate): string {
+  return `Diario alimentare ${fileDate(from)} - ${fileDate(to)}`
+}
+
+const MAIN_MEALS = MEALS.filter((m) => m.id !== 'fuori-pasto')
+
+/**
+ * Ordine nella giornata: i pasti nella loro sequenza, i "fuori pasto" al loro
+ * posto in base all'orario (l'orario dei pasti principali è spesso quello di
+ * inserimento, quindi non si ordina tutto per orario).
+ */
+function dayOrder(e: Entry): number {
+  const i = MAIN_MEALS.findIndex((m) => m.id === e.meal)
+  if (i >= 0) return i
+  const next = MAIN_MEALS.findIndex((m) => m.defaultTime > e.time)
+  return (next === -1 ? MAIN_MEALS.length : next) - 0.5
+}
+
+function sortForDay(entries: Entry[]): Entry[] {
+  return [...entries].sort(
+    (a, b) => dayOrder(a) - dayOrder(b) || a.time.localeCompare(b.time) || a.createdAt.localeCompare(b.createdAt),
+  )
+}
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
+
+function supplementsSummary(data: ReportData, days: ISODate[], createdOn: ISODate): ReportSummaryLine[] {
   const out: ReportSummaryLine[] = []
   for (const s of data.supplements) {
     const taken = new Set(
       data.supplementLogs.filter((l) => l.supplementId === s.id && l.taken).map((l) => l.date),
     )
-    const expected = days.filter((d) => supplementStatus(s, d).state === 'giornaliero')
-    if (expected.length) {
-      const done = expected.filter((d) => taken.has(d)).length
-      out.push({ label: s.name, value: `preso ${done} ${done === 1 ? 'giorno' : 'giorni'} su ${expected.length}` })
-    } else if (taken.size) {
-      out.push({ label: s.name, value: `preso ${taken.size} ${taken.size === 1 ? 'volta' : 'volte'} (al bisogno)` })
+    const state = (d: ISODate) => supplementStatus(s, d).state
+    // Oggi conta solo se è già stato preso; i giorni futuri non contano.
+    const counted = (d: ISODate) => d < createdOn || (d === createdOn && taken.has(d))
+    const elapsed = days.filter((d) => d <= createdOn)
+    const phaseDays = elapsed.filter((d) => state(d) === 'giornaliero')
+    const daily = phaseDays.filter(counted)
+    const asNeeded = days.filter((d) => taken.has(d) && state(d) === 'al-bisogno').length
+    if (daily.length) {
+      const done = daily.filter((d) => taken.has(d)).length
+      // Se la fase giornaliera copre solo una parte del periodo, si dice quale.
+      const phase =
+        phaseDays.length < elapsed.length
+          ? phaseDays.length === 1
+            ? ` (fase giornaliera: ${formatShort(phaseDays[0])})`
+            : ` (fase giornaliera dal ${formatShort(phaseDays[0])} al ${formatShort(phaseDays[phaseDays.length - 1])})`
+          : ''
+      out.push({
+        label: s.name,
+        value:
+          `preso ${plural(done, 'giorno', 'giorni')} su ${daily.length} previsti${phase}` +
+          (asNeeded ? `, poi ${plural(asNeeded, 'volta', 'volte')} al bisogno` : ''),
+      })
+    } else if (asNeeded) {
+      out.push({ label: s.name, value: `preso ${plural(asNeeded, 'volta', 'volte')} (al bisogno)` })
     }
   }
   return out
@@ -126,7 +176,7 @@ function symptomsSummary(data: ReportData): ReportSummaryLine[] {
     const max = Math.max(...values)
     out.push({
       label,
-      value: `${values.length} ${values.length === 1 ? 'volta' : 'volte'}, intensità media ${formatNumber(avg)}/10 (massima ${max})`,
+      value: `${plural(values.length, 'volta', 'volte')}, intensità media ${formatNumber(avg)}/10 (massima ${max})`,
     })
   }
   const stools = data.symptoms.filter((s) => s.type === 'feci' && s.bristol)
@@ -139,7 +189,7 @@ function symptomsSummary(data: ReportData): ReportSummaryLine[] {
       .join(', ')
     out.push({
       label: 'Feci (scala di Bristol)',
-      value: `${stools.length} ${stools.length === 1 ? 'registrazione' : 'registrazioni'}: ${detail}`,
+      value: `${plural(stools.length, 'registrazione', 'registrazioni')}: ${detail}`,
     })
   }
   return out
@@ -169,7 +219,7 @@ function mergeEmptyDays(days: ReportDaySection[]): ReportDaySection[] {
 
 export interface BuildOptions {
   settings: Pick<Settings, 'limits' | 'dietStartDate'>
-  /** Data di creazione mostrata nel documento (default: oggi). */
+  /** Data di creazione del documento (default: oggi); i giorni successivi non contano. */
   createdOn?: ISODate
 }
 
@@ -181,11 +231,11 @@ export function buildReportDocument(
 ): ReportDocument {
   const limits: Limits = settings.limits
   const index = buildFoodIndex(data.foods)
-  const dayReports = buildDayReports(data, from, to)
   const allDays = dateRange(from, to)
+  const elapsedDays = allDays.filter((d) => d <= createdOn)
 
-  const days: ReportDaySection[] = dayReports.map((day) => {
-    const rows = day.entries.map((e): ReportRow => {
+  const sections: ReportDaySection[] = buildDayReports(data, from, to).map((day) => {
+    const rows = sortForDay(day.entries).map((e): ReportRow => {
       const food = resolveFood(e, index)
       const flag =
         food?.status === 'evitare' || food?.status === 'verificare'
@@ -203,17 +253,21 @@ export function buildReportDocument(
       }
     })
     const symptoms = day.symptoms.map((s) => {
-      const detail =
-        s.type === 'feci'
-          ? `Bristol ${s.bristol} (${BRISTOL[(s.bristol ?? 1) - 1]?.label.toLowerCase()})`
-          : `intensità ${s.intensity}/10`
-      return `${s.time} – ${symptomLabel(s)}: ${detail}${s.note ? ` – ${s.note}` : ''}`
+      const note = s.note ? ` – ${s.note}` : ''
+      if (s.type === 'feci') {
+        const label = BRISTOL[(s.bristol ?? 1) - 1]?.label.toLowerCase()
+        return `${s.time} – Feci: tipo ${s.bristol} della scala di Bristol (${label})${note}`
+      }
+      return `${s.time} – ${symptomLabel(s)}: intensità ${s.intensity}/10${note}`
     })
-    const supplements = day.supplementsTaken.map((s) => (s.time ? `${s.name} (${s.time})` : s.name))
+    const hasStools = day.symptoms.some((s) => s.type === 'feci')
+    const hasSymptoms = day.symptoms.some((s) => s.type !== 'feci')
+    const supplements = day.supplementsTaken.map((s) => (s.time ? `${s.name} alle ${s.time}` : s.name))
     return {
       date: day.date,
       title: `${capitalize(formatLong(day.date))} ${parseISODate(day.date).getFullYear()}`,
       rows,
+      symptomsTitle: hasSymptoms && hasStools ? 'Sintomi e feci' : hasStools ? 'Feci' : 'Sintomi',
       symptoms,
       noSymptoms: day.noSymptoms,
       supplements,
@@ -222,26 +276,47 @@ export function buildReportDocument(
     }
   })
 
-  // Aderenza per settimana (lunedì–domenica), limitata all'intervallo scelto.
+  // Limiti sulla settimana intera (lunedì–domenica), anche oltre i bordi del periodo:
+  // uova e latticini hanno limiti settimanali. Le settimane senza alimenti si saltano.
+  const weekSource = data.weekEntries ?? data.entries
   const weeks: ReportWeek[] = []
   for (let start = weekStart(from); start <= to; start = addDays(start, 7)) {
-    const s = start < from ? from : start
-    const e = addDays(start, 6) > to ? to : addDays(start, 6)
-    const entries = data.entries.filter((x) => x.date >= s && x.date <= e)
+    const end = addDays(start, 6)
+    const entries = weekSource.filter((x) => x.date >= start && x.date <= end)
+    if (!entries.length) continue
+    const notes: string[] = []
+    if (start < from || end > to) {
+      notes.push(
+        data.weekEntries
+          ? 'conteggi sull’intera settimana, anche fuori dal periodo del diario'
+          : 'conteggi solo sui giorni del periodo',
+      )
+    }
+    if (end > createdOn) notes.push('settimana non ancora conclusa')
     weeks.push({
-      title: s === e ? formatFull(s) : `${formatFull(s)} – ${formatFull(e)}`,
-      // Senza alimenti registrati i limiti risulterebbero "rispettati": meglio non mostrarli.
-      lines: entries.length ? adherenceLines(weekAdherence(entries, index, limits), limits) : [],
+      title: `Settimana ${periodLabel(start, end)}`,
+      note: notes.length ? `${capitalize(notes.join('; '))}.` : undefined,
+      lines: adherenceLines(weekAdherence(entries, index, limits), limits),
     })
   }
 
-  const daysWithData = days.filter((d) => !d.empty).length
-  const quietDays = days.filter((d) => d.noSymptoms).length
+  const mealDays = sections.filter((d) => d.rows.length && d.date <= createdOn).length
+  const loggedDays = sections.filter((d) => !d.empty && d.date <= createdOn).length
+  const symptomDays = new Set(data.symptoms.filter((s) => s.type !== 'feci').map((s) => s.date)).size
   const summary: ReportSummaryLine[] = [
-    { label: 'Giorni compilati', value: `${daysWithData} su ${allDays.length}` },
-    ...(quietDays ? [{ label: 'Giorni senza sintomi', value: String(quietDays) }] : []),
+    ...(elapsedDays.length
+      ? [{ label: 'Giorni con pasti registrati', value: `${mealDays} su ${elapsedDays.length}` }]
+      : []),
+    ...(loggedDays
+      ? [
+          {
+            label: 'Giorni con sintomi',
+            value: `${symptomDays} su ${plural(loggedDays, 'giorno compilato', 'giorni compilati')}`,
+          },
+        ]
+      : []),
     ...symptomsSummary(data),
-    ...supplementsSummary(data, allDays),
+    ...supplementsSummary(data, allDays, createdOn),
   ]
 
   const meta: string[] = []
@@ -260,7 +335,7 @@ export function buildReportDocument(
     meta,
     summary,
     weeks,
-    days: mergeEmptyDays(days),
-    fileName: `Diario alimentare ${fileDate(from)} - ${fileDate(to)}`,
+    days: mergeEmptyDays(sections),
+    fileName: reportFileName(from, to),
   }
 }

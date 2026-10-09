@@ -1,12 +1,12 @@
 import { CheckCircle2Icon, ChevronLeftIcon, ChevronRightIcon, ShareIcon, TriangleAlertIcon } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Page, SectionTitle } from '@/components/page'
 import { ShareDiaryDrawer } from '@/components/share-diary-drawer'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useReportData, useSettings } from '@/hooks/use-data'
-import { useRoute } from '@/hooks/use-route'
+import { href, useRoute } from '@/hooks/use-route'
 import { useSelectedDate } from '@/hooks/selected-date'
 import { addDays, formatLong, parseISODate, today, weekStart } from '@/lib/dates'
 import { buildFoodIndex } from '@/lib/foods'
@@ -23,6 +23,12 @@ export function SummaryPage() {
   const settings = useSettings()
   const [from, setFrom] = useState(() => weekStart(date))
   const [sharing, setSharing] = useState(() => params.get('condividi') === '1')
+
+  // Il link "Condividi il diario" apre il drawer una volta: dopo un ricaricamento non deve riaprirsi.
+  const fromShareLink = params.has('condividi')
+  useEffect(() => {
+    if (fromShareLink) history.replaceState(null, '', href('/riepilogo'))
+  }, [fromShareLink])
   const to = addDays(from, 6)
   const data = useReportData(from, to)
 

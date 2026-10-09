@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { entry, foods, limits } from '@/test/fixtures'
 import type { DayLog, Supplement, SupplementLog, Symptom } from '@/model/types'
 import { pdfText, renderReportPdf } from './pdf-report'
-import { buildReportDocument, periodLabel } from './report-document'
+import { buildReportDocument, periodLabel, reportFileName } from './report-document'
 import { reportSignature, type ReportData } from './report'
 
 const symptom = (s: Partial<Symptom> & Pick<Symptom, 'date' | 'type'>): Symptom => ({
@@ -11,6 +11,15 @@ const symptom = (s: Partial<Symptom> & Pick<Symptom, 'date' | 'type'>): Symptom 
   createdAt: '',
   updatedAt: '',
   ...s,
+})
+
+const log = (supplementId: string, date: string, time?: string): SupplementLog => ({
+  id: `${supplementId}|${date}`,
+  supplementId,
+  date,
+  taken: true,
+  time,
+  updatedAt: '',
 })
 
 const probiotico: Supplement = {
@@ -43,6 +52,10 @@ describe('periodLabel', () => {
   it('un solo giorno', () => {
     expect(periodLabel('2026-10-09', '2026-10-09')).toBe('Venerdì 9 ottobre 2026')
   })
+
+  it('nome del file senza barre', () => {
+    expect(reportFileName('2026-10-05', '2026-10-11')).toBe('Diario alimentare 05-10-2026 - 11-10-2026')
+  })
 })
 
 describe('buildReportDocument', () => {
@@ -58,14 +71,15 @@ describe('buildReportDocument', () => {
         symptom({ date: '2026-10-05', type: 'gonfiore', intensity: 4, time: '15:00' }),
         symptom({ date: '2026-10-06', type: 'gonfiore', intensity: 6, time: '21:00', note: 'dopo cena' }),
         symptom({ date: '2026-10-06', type: 'feci', bristol: 4, time: '08:00' }),
+        symptom({ date: '2026-10-07', type: 'feci', bristol: 3, time: '08:30' }),
       ],
       dayLogs: [{ date: '2026-10-07', noSymptoms: true, updatedAt: '' } satisfies DayLog],
       supplements: [probiotico, massigen],
       supplementLogs: [
-        { id: 'a', supplementId: 'probiotico', date: '2026-10-05', taken: true, time: '21:30', updatedAt: '' },
-        { id: 'b', supplementId: 'probiotico', date: '2026-10-06', taken: true, updatedAt: '' },
-        { id: 'c', supplementId: 'massigen', date: '2026-10-06', taken: true, updatedAt: '' },
-      ] satisfies SupplementLog[],
+        log('probiotico', '2026-10-05', '21:30'),
+        log('probiotico', '2026-10-06'),
+        log('massigen', '2026-10-06'),
+      ],
     }),
     '2026-10-05',
     '2026-10-11',
@@ -88,21 +102,6 @@ describe('buildReportDocument', () => {
     expect(doc.days.map((d) => d.empty)).toEqual([false, false, false, true])
   })
 
-  it('un singolo giorno vuoto resta con il suo titolo', () => {
-    const d = buildReportDocument(
-      data({ entries: [entry({ date: '2026-10-05', foodId: 'riso' }), entry({ date: '2026-10-07', foodId: 'riso' })] }),
-      '2026-10-05',
-      '2026-10-07',
-      { settings },
-    )
-    expect(d.days.map((x) => x.title)).toEqual([
-      'Lunedì 5 ottobre 2026',
-      'Martedì 6 ottobre 2026',
-      'Mercoledì 7 ottobre 2026',
-    ])
-    expect(d.days[1].empty).toBe(true)
-  })
-
   it('righe leggibili con segnalazioni', () => {
     const [riso, aglio, zucchine] = doc.days[0].rows
     expect(riso).toMatchObject({ time: '13:00', meal: 'Pranzo', food: 'Riso', quantity: '80 g', flag: undefined })
@@ -110,49 +109,149 @@ describe('buildReportDocument', () => {
     expect(zucchine).toMatchObject({ flag: 'oltre la porzione, max 65 g', note: 'grigliate' })
   })
 
-  it('sintomi, feci, integratori e giornata senza sintomi', () => {
+  it('sintomi, feci e integratori in frasi semplici', () => {
     expect(doc.days[0].symptoms).toEqual(['15:00 – Gonfiore: intensità 4/10'])
+    expect(doc.days[0].symptomsTitle).toBe('Sintomi')
     expect(doc.days[1].symptoms).toEqual([
-      '08:00 – Feci (Bristol): Bristol 4 (a salsiccia o serpente, liscia e morbida)',
+      '08:00 – Feci: tipo 4 della scala di Bristol (a salsiccia o serpente, liscia e morbida)',
       '21:00 – Gonfiore: intensità 6/10 – dopo cena',
     ])
-    expect(doc.days[0].supplements).toEqual(['Probiotico (21:30)'])
-    expect(doc.days[2].noSymptoms).toBe(true)
+    expect(doc.days[1].symptomsTitle).toBe('Sintomi e feci')
+    expect(doc.days[0].supplements).toEqual(['Probiotico alle 21:30'])
+  })
+
+  it('"nessun sintomo" con le sole feci non sembra una contraddizione', () => {
+    expect(doc.days[2]).toMatchObject({ noSymptoms: true, symptomsTitle: 'Feci' })
   })
 
   it('riepilogo del periodo', () => {
     expect(doc.summary).toEqual([
-      { label: 'Giorni compilati', value: '3 su 7' },
-      { label: 'Giorni senza sintomi', value: '1' },
+      { label: 'Giorni con pasti registrati', value: '2 su 7' },
+      { label: 'Giorni con sintomi', value: '2 su 3 giorni compilati' },
       { label: 'Gonfiore', value: '2 volte, intensità media 5/10 (massima 6)' },
-      { label: 'Feci (scala di Bristol)', value: '1 registrazione: tipo 4 (1)' },
-      { label: 'Probiotico', value: 'preso 2 giorni su 7' },
+      { label: 'Feci (scala di Bristol)', value: '2 registrazioni: tipo 3 (1), tipo 4 (1)' },
+      { label: 'Probiotico', value: 'preso 2 giorni su 7 previsti' },
       { label: 'Massigen', value: 'preso 1 volta (al bisogno)' },
     ])
   })
 
-  it('aderenza ai limiti per settimana', () => {
+  it('limiti scritti con il dato e il limite', () => {
     expect(doc.weeks).toHaveLength(1)
-    const olio = doc.weeks[0].lines.find((l) => l.id === 'olio')!
-    expect(olio.ok).toBe(false)
-    expect(doc.weeks[0].lines.find((l) => l.id === 'evitare')?.detail).toBe('Aglio')
+    expect(doc.weeks[0].title).toBe("Settimana dal 5 all'11 ottobre 2026")
+    const line = (id: string) => doc.weeks[0].lines.find((l) => l.id === id)!
+    expect(line('olio')).toMatchObject({ ok: false, detail: 'mar 6 ott: 5 cucchiai (limite 4 al giorno)' })
+    expect(line('uova').detail).toBe('0 (limite 6 a settimana)')
+    expect(line('latticini').detail).toBe('0 volte (limite 1 volta a settimana)')
+    expect(line('frutta').detail).toBe('Sempre entro il limite (1 per spuntino)')
+    expect(line('evitare').detail).toBe('Aglio')
+  })
+})
+
+describe('limiti sulla settimana intera', () => {
+  // Venerdì 9/10: "Ultimi 7 giorni" va da sabato 3 a venerdì 9.
+  const yogurt = (date: string) => entry({ date, foodId: 'yogurt-delattosato', meal: 'colazione' })
+
+  it('conta anche i giorni della settimana fuori dal periodo', () => {
+    const weekEntries = [yogurt('2026-09-28'), yogurt('2026-10-03')]
+    const d = buildReportDocument(
+      data({ entries: [yogurt('2026-10-03')], weekEntries }),
+      '2026-10-03',
+      '2026-10-09',
+      { settings, createdOn: '2026-10-09' },
+    )
+    expect(d.weeks.map((w) => w.title)).toEqual(['Settimana dal 28 settembre al 4 ottobre 2026'])
+    const dairy = d.weeks[0].lines.find((l) => l.id === 'latticini')!
+    expect(dairy).toMatchObject({ ok: false, detail: '2 volte (limite 1 volta a settimana)' })
+    expect(d.weeks[0].note).toBe('Conteggi sull’intera settimana, anche fuori dal periodo del diario.')
   })
 
-  it('divide le settimane e le taglia sull’intervallo', () => {
-    const d = buildReportDocument(data(), '2026-10-08', '2026-10-14', { settings })
-    expect(d.weeks.map((w) => w.title)).toEqual(['08/10/2026 – 11/10/2026', '12/10/2026 – 14/10/2026'])
+  it('segnala la settimana non ancora conclusa', () => {
+    const d = buildReportDocument(
+      data({ entries: [yogurt('2026-10-06')], weekEntries: [yogurt('2026-10-06')] }),
+      '2026-10-05',
+      '2026-10-09',
+      { settings, createdOn: '2026-10-09' },
+    )
+    expect(d.weeks[0].note).toBe(
+      'Conteggi sull’intera settimana, anche fuori dal periodo del diario; settimana non ancora conclusa.',
+    )
   })
 
-  it('una settimana senza alimenti non risulta "nei limiti"', () => {
+  it('salta le settimane senza alimenti', () => {
     const d = buildReportDocument(data(), '2026-10-05', '2026-10-11', { settings })
-    expect(d.weeks[0].lines).toEqual([])
+    expect(d.weeks).toEqual([])
+  })
+})
+
+describe('ordine delle voci nella giornata', () => {
+  it('i fuori pasto vanno al loro posto in base all’orario', () => {
+    const d = buildReportDocument(
+      data({
+        entries: [
+          entry({ date: '2026-10-05', foodId: 'pollo', meal: 'cena', time: '20:00' }),
+          entry({ date: '2026-10-05', foodId: 'kiwi', meal: 'fuori-pasto', time: '17:00' }),
+          entry({ date: '2026-10-05', foodId: 'riso', meal: 'pranzo', time: '13:00' }),
+          entry({ date: '2026-10-05', foodId: 'tisana', meal: 'colazione', time: '13:30' }),
+        ],
+      }),
+      '2026-10-05',
+      '2026-10-05',
+      { settings },
+    )
+    expect(d.days[0].rows.map((r) => r.meal)).toEqual(['Colazione', 'Pranzo', 'Fuori pasto', 'Cena'])
+  })
+})
+
+describe('integratori nel riepilogo', () => {
+  const daily = { ...probiotico, startDate: '2026-09-01' }
+  const range = (from: string, n: number) =>
+    Array.from({ length: n }, (_, i) => {
+      const d = new Date(`${from}T12:00:00`)
+      d.setDate(d.getDate() + i)
+      return d.toISOString().slice(0, 10)
+    })
+
+  it('non conta oggi se non è ancora stato preso, né i giorni futuri', () => {
+    const logs = range('2026-10-05', 4).map((d) => log('probiotico', d)) // 5–8 ottobre
+    const d = buildReportDocument(
+      data({ supplements: [{ ...daily, startDate: '2026-09-20' }], supplementLogs: logs }),
+      '2026-10-05',
+      '2026-10-11',
+      { settings, createdOn: '2026-10-09' },
+    )
+    expect(d.summary.find((s) => s.label === 'Probiotico')?.value).toBe('preso 4 giorni su 4 previsti')
+  })
+
+  it('mostra la fase giornaliera e le assunzioni al bisogno dopo', () => {
+    const logs = [...range('2026-09-25', 6), '2026-10-03', '2026-10-06'].map((d) => log('probiotico', d))
+    const d = buildReportDocument(
+      data({ supplements: [daily], supplementLogs: logs }),
+      '2026-09-25',
+      '2026-10-08',
+      { settings, createdOn: '2026-10-09' },
+    )
+    expect(d.summary.find((s) => s.label === 'Probiotico')?.value).toBe(
+      'preso 6 giorni su 6 previsti (fase giornaliera dal ven 25 set al mer 30 set), poi 2 volte al bisogno',
+    )
+  })
+
+  it('non mostra gli integratori eliminati', () => {
+    const d = buildReportDocument(
+      data({ supplements: [], supplementLogs: [log('glutagenics', '2026-10-05')], entries: [entry({ date: '2026-10-05', foodId: 'riso' })] }),
+      '2026-10-05',
+      '2026-10-05',
+      { settings },
+    )
+    expect(d.days[0].supplements).toEqual([])
   })
 })
 
 describe('PDF', () => {
-  it('normalizza i caratteri non supportati dai font standard', () => {
-    expect(pdfText('Caffè – “dolce”… l’ultimo 😊 €2')).toBe('Caffè - "dolce"... l\'ultimo EUR2')
+  it('tiene la punteggiatura tipografica e toglie i caratteri non supportati', () => {
+    expect(pdfText('Caffè – “dolce”… l’ultimo 😊 €2 •')).toBe('Caffè – “dolce”… l’ultimo €2 •')
     expect(pdfText('perché più già ½ cucchiaio')).toBe('perché più già ½ cucchiaio')
+    expect(pdfText('stressante 😓, dormito poco')).toBe('stressante, dormito poco')
+    expect(pdfText('„citazione‟ −5')).toBe('"citazione -5')
   })
 
   it('genera un PDF valido', async () => {
@@ -175,5 +274,12 @@ describe('reportSignature', () => {
     expect(reportSignature(base)).toBe(reportSignature(data({ entries: [...base.entries] })))
     expect(reportSignature(base)).not.toBe(reportSignature(changed))
     expect(reportSignature(base, 'a')).not.toBe(reportSignature(base, 'b'))
+  })
+
+  it('tiene conto anche delle voci della settimana intera', () => {
+    const base = data()
+    expect(reportSignature(base)).not.toBe(
+      reportSignature(data({ weekEntries: [entry({ foodId: 'uova', updatedAt: '2026-10-01T10:00:00.000Z' })] })),
+    )
   })
 })

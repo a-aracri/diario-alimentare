@@ -17,6 +17,9 @@ export function downloadFile(file: File): void {
   setTimeout(() => URL.revokeObjectURL(url), 10_000)
 }
 
+/** Condivisione in corso (il foglio di iOS si sta aprendo o è aperto). */
+let sharing = false
+
 /**
  * Su iPhone apre il foglio di condivisione (Mail, WhatsApp, Salva su File…),
  * altrove scarica il file.
@@ -27,12 +30,18 @@ export function downloadFile(file: File): void {
  */
 export async function shareFile(file: File): Promise<ShareResult> {
   if (canShareFile(file)) {
+    // Un secondo tocco mentre il foglio di condivisione si sta aprendo viene ignorato.
+    if (sharing) return 'cancelled'
+    sharing = true
     try {
       await navigator.share({ files: [file], title: file.name })
       return 'shared'
     } catch (err) {
-      if ((err as DOMException)?.name === 'AbortError') return 'cancelled'
+      const name = (err as DOMException)?.name
+      if (name === 'AbortError' || name === 'InvalidStateError') return 'cancelled'
       // Condivisione non riuscita: si prova con il download.
+    } finally {
+      sharing = false
     }
   }
   downloadFile(file)

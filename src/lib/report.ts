@@ -21,6 +21,11 @@ import { formatNumber } from './units'
 
 export interface ReportData {
   entries: Entry[]
+  /**
+   * Voci delle settimane intere (lunedì–domenica) che toccano il periodo: i limiti
+   * settimanali vanno valutati sulla settimana completa. Se assente si usa `entries`.
+   */
+  weekEntries?: Entry[]
   symptoms: Symptom[]
   dayLogs: DayLog[]
   supplements: Supplement[]
@@ -65,9 +70,10 @@ export function buildDayReports(data: ReportData, from: ISODate, to: ISODate): D
         .sort((a, b) => a.time.localeCompare(b.time)),
       noSymptoms: !!log?.noSymptoms,
       note: log?.note,
+      // Gli integratori eliminati non compaiono (resterebbe solo il loro id).
       supplementsTaken: data.supplementLogs
-        .filter((l) => l.date === date && l.taken)
-        .map((l) => ({ name: supplementName.get(l.supplementId) ?? l.supplementId, time: l.time })),
+        .filter((l) => l.date === date && l.taken && supplementName.has(l.supplementId))
+        .map((l) => ({ name: supplementName.get(l.supplementId)!, time: l.time })),
     }
   })
 }
@@ -156,30 +162,37 @@ export interface AdherenceLine {
 
 const uniqueNames = (entries: Entry[]) => [...new Set(entries.map((e) => e.name))].join(', ')
 
-/** Righe leggibili sull'aderenza ai limiti, per riepilogo e stampa. */
+/**
+ * Righe leggibili sull'aderenza ai limiti, per riepilogo, PDF e stampa:
+ * prima il dato, poi il limite tra parentesi.
+ */
 export function adherenceLines(a: WeekAdherence, limits: Limits): AdherenceLine[] {
   const dairyPortion = a.dairyPortionOver.length
+  const snacks = a.fruitSnacksOver.length
+  const times = (n: number) => `${formatNumber(n)} ${n === 1 ? 'volta' : 'volte'}`
   return [
     {
       id: 'olio',
       label: 'Olio EVO',
       ok: !a.oilDaysOver.length,
       detail: a.oilDaysOver.length
-        ? `Oltre ${limits.oilTbspPerDay} cucchiai: ${a.oilDaysOver.map(formatShort).join(', ')}`
-        : `Entro ${limits.oilTbspPerDay} cucchiai al giorno`,
+        ? `${a.oilDaysOver
+            .map((d) => `${formatShort(d)}: ${formatNumber(a.oilByDay.get(d) ?? 0)} cucchiai`)
+            .join(', ')} (limite ${limits.oilTbspPerDay} al giorno)`
+        : `Sempre entro il limite (${limits.oilTbspPerDay} cucchiai al giorno)`,
     },
     {
       id: 'uova',
       label: 'Uova',
       ok: !a.eggsOver,
-      detail: `${formatNumber(a.eggs)} su ${limits.eggsPerWeek} a settimana`,
+      detail: `${formatNumber(a.eggs)} (limite ${limits.eggsPerWeek} a settimana)`,
     },
     {
       id: 'latticini',
       label: 'Latticini delattosati',
       ok: !a.dairyOver && !dairyPortion,
       detail:
-        `${a.dairyOccasions} ${a.dairyOccasions === 1 ? 'volta' : 'volte'} su ${limits.dairyTimesPerWeek} a settimana` +
+        `${times(a.dairyOccasions)} (limite ${times(limits.dairyTimesPerWeek)} a settimana)` +
         (dairyPortion
           ? `; oltre ${limits.dairyGramsPerServing} g in ${dairyPortion} ${dairyPortion === 1 ? 'pasto' : 'pasti'}`
           : ''),
@@ -187,10 +200,10 @@ export function adherenceLines(a: WeekAdherence, limits: Limits): AdherenceLine[
     {
       id: 'frutta',
       label: 'Frutta negli spuntini',
-      ok: !a.fruitSnacksOver.length,
-      detail: a.fruitSnacksOver.length
-        ? `Più di ${limits.fruitPerSnack} in ${a.fruitSnacksOver.length} ${a.fruitSnacksOver.length === 1 ? 'spuntino' : 'spuntini'}`
-        : `Massimo ${limits.fruitPerSnack} per spuntino`,
+      ok: !snacks,
+      detail: snacks
+        ? `${snacks} ${snacks === 1 ? 'spuntino' : 'spuntini'} con più frutti (limite ${limits.fruitPerSnack} per spuntino)`
+        : `Sempre entro il limite (${limits.fruitPerSnack} per spuntino)`,
     },
     {
       id: 'evitare',
@@ -214,7 +227,15 @@ export function adherenceLines(a: WeekAdherence, limits: Limits): AdherenceLine[
 export function reportSignature(data: ReportData, extra = ''): string {
   const latest = (rows: { updatedAt: string }[]) =>
     rows.reduce((max, r) => (r.updatedAt > max ? r.updatedAt : max), '')
-  const parts = [data.entries, data.symptoms, data.dayLogs, data.supplements, data.supplementLogs, data.foods].map(
+  const parts = [
+    data.entries,
+    data.weekEntries ?? [],
+    data.symptoms,
+    data.dayLogs,
+    data.supplements,
+    data.supplementLogs,
+    data.foods,
+  ].map(
     (rows) => `${rows.length}:${latest(rows)}`,
   )
   return [...parts, extra].join('|')

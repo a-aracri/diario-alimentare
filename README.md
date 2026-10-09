@@ -16,7 +16,9 @@ Pensata per iPhone ("Aggiungi a Home"), funziona offline e salva i dati solo sul
 - Idee del piano (colazioni con ricette, spuntini, pranzo e cena) da aggiungere con un tocco
 - Modalità fase acuta gastrite/reflusso
 - Fase di reintroduzione per gruppo FODMAP
-- Riepilogo settimanale, export CSV, vista stampabile/PDF, backup e ripristino JSON
+- Condivisione del diario per un periodo a scelta: un PDF leggibile da mandare alla nutrizionista
+  con Mail, WhatsApp o File (Riepilogo o Altro → Condividi il diario)
+- Riepilogo settimanale, vista stampabile, export CSV, backup e ripristino JSON
 
 ## Sviluppo
 
