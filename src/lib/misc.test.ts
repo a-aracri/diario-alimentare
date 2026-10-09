@@ -4,7 +4,7 @@ import { SUGGESTIONS } from '@/data/piano'
 import { foods } from '@/test/fixtures'
 import type { Supplement } from '@/model/types'
 import { toCSV } from './csv'
-import { addDays, dateRange, diffDays, weekStart } from './dates'
+import { addDays, dateRange, diffDays, guessMeal, isBackupDue, weekStart } from './dates'
 import { searchFoods } from './foods'
 import { isReminderDue, supplementStatus } from './supplements'
 
@@ -95,5 +95,26 @@ describe('integratori', () => {
 describe('CSV', () => {
   it('usa il punto e virgola e protegge i campi', () => {
     expect(toCSV([['a;b', 'c"d', 1.5, null, '=SOMMA(1)']])).toBe('"a;b";"c""d";1,5;;\'=SOMMA(1)')
+  })
+})
+
+describe('promemoria backup', () => {
+  const now = new Date('2026-10-09T12:00:00Z')
+  it('scatta dopo 7 giorni dall’ultimo backup', () => {
+    expect(isBackupDue('2026-10-01T12:00:00Z', '2026-09-01T00:00:00Z', now)).toBe(true)
+    expect(isBackupDue('2026-10-03T12:00:00Z', '2026-09-01T00:00:00Z', now)).toBe(false)
+  })
+  it('senza backup usa la data del primo avvio', () => {
+    expect(isBackupDue(undefined, '2026-10-05T00:00:00Z', now)).toBe(false)
+    expect(isBackupDue(undefined, '2026-09-30T00:00:00Z', now)).toBe(true)
+  })
+})
+
+describe('pasto suggerito', () => {
+  it('sceglie il pasto in base all’orario', () => {
+    expect(guessMeal('07:30')).toBe('colazione')
+    expect(guessMeal('13:10')).toBe('pranzo')
+    expect(guessMeal('16:00')).toBe('spuntino-pomeriggio')
+    expect(guessMeal('23:00')).toBe('fuori-pasto')
   })
 })

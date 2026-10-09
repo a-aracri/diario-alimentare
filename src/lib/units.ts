@@ -56,3 +56,14 @@ export function toEggs(quantity: number | undefined, unit: Unit | undefined): nu
   if (unit === 'g') return quantity / EGG_GRAMS
   return quantity
 }
+
+/** Legge una quantità digitata (accetta la virgola decimale). */
+export function parseQuantity(text: string): number | undefined {
+  const n = Number.parseFloat(text.replace(',', '.'))
+  return Number.isFinite(n) && n >= 0 ? n : undefined
+}
+
+/** Testo per un campo quantità a partire da un numero. */
+export function quantityText(n: number | undefined): string {
+  return n == null ? '' : String(n).replace('.', ',')
+}

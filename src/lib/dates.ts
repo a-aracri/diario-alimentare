@@ -1,4 +1,4 @@
-import type { ISODate, TimeHM } from '@/model/types'
+import type { ISODate, MealId, TimeHM } from '@/model/types'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -94,4 +94,25 @@ export function relativeLabel(date: ISODate, ref: ISODate = today()): string {
   if (diff === -1) return 'Ieri'
   if (diff === 1) return 'Domani'
   return formatLong(date)
+}
+
+/** Pasto più probabile per un orario (per l'inserimento rapido). */
+export function guessMeal(time: TimeHM): MealId {
+  if (time < '10:00') return 'colazione'
+  if (time < '12:00') return 'spuntino-mattina'
+  if (time < '15:00') return 'pranzo'
+  if (time < '18:30') return 'spuntino-pomeriggio'
+  if (time < '22:30') return 'cena'
+  return 'fuori-pasto'
+}
+
+/** true se l'ultimo backup (o il primo avvio) risale a più di `days` giorni fa. */
+export function isBackupDue(
+  lastBackupAt: string | undefined,
+  createdAt: string,
+  now: Date = new Date(),
+  days = 7,
+): boolean {
+  const ref = new Date(lastBackupAt ?? createdAt).getTime()
+  return now.getTime() - ref > days * 86_400_000
 }

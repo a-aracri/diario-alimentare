@@ -8,13 +8,16 @@ import type {
   Entry,
   Food,
   ISODate,
+  Limits,
   Supplement,
   SupplementLog,
   Symptom,
 } from '@/model/types'
 import { toCSV, type CSVCell } from './csv'
-import { dateRange, formatFull } from './dates'
+import { dateRange, formatFull, formatShort } from './dates'
 import { buildFoodIndex, resolveFood } from './foods'
+import type { WeekAdherence } from './limits'
+import { formatNumber } from './units'
 
 export interface ReportData {
   entries: Entry[]
@@ -142,4 +145,64 @@ export function buildCSV(data: ReportData, from: ISODate, to: ISODate): string {
     }
   }
   return toCSV(rows)
+}
+
+export interface AdherenceLine {
+  id: string
+  label: string
+  ok: boolean
+  detail: string
+}
+
+const uniqueNames = (entries: Entry[]) => [...new Set(entries.map((e) => e.name))].join(', ')
+
+/** Righe leggibili sull'aderenza ai limiti, per riepilogo e stampa. */
+export function adherenceLines(a: WeekAdherence, limits: Limits): AdherenceLine[] {
+  const dairyPortion = a.dairyPortionOver.length
+  return [
+    {
+      id: 'olio',
+      label: 'Olio EVO',
+      ok: !a.oilDaysOver.length,
+      detail: a.oilDaysOver.length
+        ? `Oltre ${limits.oilTbspPerDay} cucchiai: ${a.oilDaysOver.map(formatShort).join(', ')}`
+        : `Entro ${limits.oilTbspPerDay} cucchiai al giorno`,
+    },
+    {
+      id: 'uova',
+      label: 'Uova',
+      ok: !a.eggsOver,
+      detail: `${formatNumber(a.eggs)} su ${limits.eggsPerWeek} a settimana`,
+    },
+    {
+      id: 'latticini',
+      label: 'Latticini delattosati',
+      ok: !a.dairyOver && !dairyPortion,
+      detail:
+        `${a.dairyOccasions} ${a.dairyOccasions === 1 ? 'volta' : 'volte'} su ${limits.dairyTimesPerWeek} a settimana` +
+        (dairyPortion
+          ? `; oltre ${limits.dairyGramsPerServing} g in ${dairyPortion} ${dairyPortion === 1 ? 'pasto' : 'pasti'}`
+          : ''),
+    },
+    {
+      id: 'frutta',
+      label: 'Frutta negli spuntini',
+      ok: !a.fruitSnacksOver.length,
+      detail: a.fruitSnacksOver.length
+        ? `Più di ${limits.fruitPerSnack} in ${a.fruitSnacksOver.length} ${a.fruitSnacksOver.length === 1 ? 'spuntino' : 'spuntini'}`
+        : `Massimo ${limits.fruitPerSnack} per spuntino`,
+    },
+    {
+      id: 'evitare',
+      label: 'Alimenti da evitare',
+      ok: !a.avoided.length,
+      detail: a.avoided.length ? uniqueNames(a.avoided) : 'Nessuno',
+    },
+    {
+      id: 'porzioni',
+      label: 'Porzioni superate',
+      ok: !a.portionExceeded.length,
+      detail: a.portionExceeded.length ? uniqueNames(a.portionExceeded) : 'Nessuna',
+    },
+  ]
 }

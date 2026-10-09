@@ -128,3 +128,38 @@
     @apply font-sans;
     }
 }
+/*
+ * Ottimizzazioni mobile (iPhone, modalità standalone).
+ * Regole fuori dai layer: hanno precedenza sulle utility dei componenti shadcn.
+ */
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  overscroll-behavior-y: none;
+}
+
+/* Campi alti almeno 44px e testo ≥ 16px: evita lo zoom automatico di iOS. */
+[data-slot="input"],
+[data-slot="native-select"] {
+  min-height: 2.75rem;
+  font-size: 1rem;
+}
+
+[data-slot="textarea"] {
+  font-size: 1rem;
+}
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+}
