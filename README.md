@@ -13,6 +13,8 @@ Pensata per iPhone ("Aggiungi a Home"), funziona offline e salva i dati solo sul
 - Avvisi gentili per alimenti da evitare, porzioni superate e limiti (olio EVO, uova, latticini
   delattosati, frutta negli spuntini)
 - Integratori con checklist giornaliera e promemoria
+- Lista della spesa con gli alimenti consentiti del piano, gli ingredienti delle ricette e gli
+  integratori, per reparto: per ogni voce "Ce l’ho" o "Mi serve", più voci personali
 - Idee del piano (colazioni con ricette, spuntini, pranzo e cena) da aggiungere con un tocco
 - Modalità fase acuta gastrite/reflusso
 - Fase di reintroduzione per gruppo FODMAP

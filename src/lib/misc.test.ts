@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { SEED_FOODS } from '@/data/fodmap'
 import { SUGGESTIONS } from '@/data/piano'
+import { SEED_SHOPPING } from '@/data/spesa'
 import { foods } from '@/test/fixtures'
-import type { Supplement } from '@/model/types'
+import type { ShoppingItem, Supplement } from '@/model/types'
 import { toCSV } from './csv'
 import { addDays, dateRange, diffDays, guessMeal, isBackupDue, weekStart } from './dates'
 import { groupLabelAt, searchFoods, sortForList } from './foods'
+import { groupShopping, shoppingCounts } from './shopping'
 import { isReminderDue, supplementStatus } from './supplements'
 
 describe('dati del piano', () => {
@@ -156,5 +158,46 @@ describe('ordine delle liste di alimenti', () => {
   it('mostra un’etichetta solo dove cambia gruppo', () => {
     const labels = sorted.map((_, i) => groupLabelAt(sorted, i)).filter(Boolean)
     expect(labels).toEqual(['Da verificare', 'Da evitare'])
+  })
+})
+
+describe('lista della spesa', () => {
+  it('ha id unici e solo alimenti consentiti dal piano', () => {
+    const ids = SEED_SHOPPING.map((i) => i.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    const foodById = new Map(SEED_FOODS.map((f) => [f.id, f]))
+    for (const item of SEED_SHOPPING) {
+      const food = foodById.get(item.id)
+      if (food) expect(['permesso', 'limite'], item.id).toContain(food.status)
+    }
+    expect(ids).toEqual(expect.arrayContaining(['pasta-senza-glutine', 'olio-evo', 'integratore-probiotico']))
+  })
+
+  const item = (id: string, section: ShoppingItem['section'], status?: ShoppingItem['status']): ShoppingItem => ({
+    id,
+    name: id,
+    section,
+    status,
+    updatedAt: '',
+  })
+  const items = [
+    item('zucchine', 'verdura', 'serve'),
+    item('carote', 'verdura', 'ho'),
+    item('riso', 'pane-pasta', 'serve'),
+    item('basilico', 'erbe-spezie'),
+  ]
+
+  it('conta e filtra per stato, per reparto e in ordine alfabetico', () => {
+    expect(shoppingCounts(items)).toEqual({ serve: 2, ho: 1, tutto: 4 })
+    expect(groupShopping(items, 'serve').map((g) => [g.section, g.items.map((i) => i.id)])).toEqual([
+      ['verdura', ['zucchine']],
+      ['pane-pasta', ['riso']],
+    ])
+    expect(groupShopping(items, 'tutto')[0].items.map((i) => i.id)).toEqual(['carote', 'zucchine'])
+  })
+
+  it('cerca ignorando maiuscole e accenti', () => {
+    const groups = groupShopping([...items, { ...item('te', 'bevande'), name: 'Tè verde' }], 'tutto', 'TE V')
+    expect(groups.flatMap((g) => g.items.map((i) => i.id))).toEqual(['te'])
   })
 })

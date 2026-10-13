@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { SEED_FOODS } from '@/data/fodmap'
 import { DEFAULT_SUPPLEMENTS } from '@/data/piano'
 import { SEED_REVISIONS } from '@/data/seed-history'
+import { SEED_SHOPPING } from '@/data/spesa'
 import { BackupError, repo } from './index'
 import { db } from './db'
 import { SEED_VERSION } from './seed'
@@ -50,6 +51,7 @@ describe('correzioni dei dati precaricati', () => {
       expect(r.version).toBeLessThanOrEqual(SEED_VERSION)
       for (const f of r.foods ?? []) expect(SEED_FOODS.map((s) => s.id)).toContain(f.id)
       for (const s of r.supplements ?? []) expect(DEFAULT_SUPPLEMENTS.map((d) => d.id)).toContain(s.id)
+      for (const i of r.shopping ?? []) expect(SEED_SHOPPING.map((s) => s.id)).toContain(i.id)
     }
   })
 
@@ -84,6 +86,35 @@ describe('correzioni dei dati precaricati', () => {
       reminderTime: '07:30',
       startDate: '2026-10-01',
     })
+  })
+})
+
+describe('lista della spesa', () => {
+  it('si carica anche sui dispositivi già in uso e rispetta le eliminazioni', async () => {
+    expect(await db.shopping.count()).toBe(SEED_SHOPPING.length)
+    await db.shopping.clear()
+    await repo.settings.update({ seedVersion: 2 })
+    await repo.init()
+    expect(await db.shopping.count()).toBe(SEED_SHOPPING.length)
+
+    await repo.shopping.remove('riso')
+    await repo.settings.update({ seedVersion: 2 })
+    await repo.init()
+    expect(await db.shopping.get('riso')).toBeUndefined()
+  })
+
+  it('segna ce l\'ho / mi serve e torna da segnare', async () => {
+    await repo.shopping.setStatus('olio-evo', 'serve')
+    expect((await db.shopping.get('olio-evo'))?.status).toBe('serve')
+    await repo.shopping.setStatus('olio-evo', 'ho')
+    expect((await db.shopping.get('olio-evo'))?.status).toBe('ho')
+    await repo.shopping.setStatus('olio-evo', undefined)
+    expect(await db.shopping.get('olio-evo')).not.toHaveProperty('status')
+  })
+
+  it('aggiunge voci personali', async () => {
+    const item = await repo.shopping.save({ name: 'Carta forno', section: 'altro', status: 'serve', custom: true })
+    expect((await repo.shopping.all()).find((i) => i.id === item.id)).toMatchObject({ name: 'Carta forno' })
   })
 })
 
@@ -127,6 +158,17 @@ describe('backup', () => {
     expect(await db.entries.count()).toBe(1)
     expect((await repo.settings.get()).dietStartDate).toBe('2026-10-01')
     expect(await db.foods.count()).toBe(SEED_FOODS.length)
+  })
+
+  it('ripristina un backup della versione 1, senza lista della spesa', async () => {
+    await repo.shopping.setStatus('riso', 'serve')
+    const backup = await repo.backup.export()
+    const { shopping: _, ...data } = backup.data
+    const v1 = { ...backup, version: 1, data: { ...data, settings: [{ ...(await repo.settings.get()), seedVersion: 2 }] } }
+
+    await repo.backup.restore(repo.backup.parse(JSON.stringify(v1)))
+    expect(await db.shopping.count()).toBe(SEED_SHOPPING.length)
+    expect((await db.shopping.get('riso'))?.status).toBeUndefined()
   })
 
   it('rifiuta file non validi', () => {

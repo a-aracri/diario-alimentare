@@ -3,7 +3,7 @@ import { nowISO } from './helpers'
 import { ensureSeed } from './seed'
 
 export const BACKUP_APP = 'diario-alimentare'
-export const BACKUP_VERSION = 1
+export const BACKUP_VERSION = 2
 
 export interface BackupFile {
   app: typeof BACKUP_APP
@@ -22,6 +22,7 @@ const KEY: Record<TableName, string> = {
   supplementLogs: 'id',
   reintroTests: 'id',
   settings: 'id',
+  shopping: 'id',
   tombstones: 'id',
 }
 
@@ -54,6 +55,8 @@ export function parseBackup(text: string): BackupFile {
   }
   const data = {} as Record<TableName, unknown[]>
   for (const t of TABLES) {
+    // Le tabelle mancanti restano vuote: i backup della versione 1 non hanno la lista della
+    // spesa, che il seed ricarica al ripristino (il loro seedVersion è precedente).
     const rows = (file.data as Record<string, unknown>)[t] ?? []
     if (!Array.isArray(rows)) throw new BackupError(`Dati non validi nella tabella «${t}».`)
     for (const row of rows) {

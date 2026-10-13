@@ -9,6 +9,7 @@ import { foodsRepo } from './foods'
 import { reintroRepo } from './reintro'
 import { ensureSeed } from './seed'
 import { settingsRepo } from './settings'
+import { shoppingRepo } from './shopping'
 import { supplementsRepo } from './supplements'
 import { dayLogsRepo, symptomsRepo } from './symptoms'
 
@@ -20,6 +21,7 @@ export const repo = {
   dayLogs: dayLogsRepo,
   supplements: supplementsRepo,
   reintro: reintroRepo,
+  shopping: shoppingRepo,
   settings: settingsRepo,
   backup: {
     export: exportBackup,
@@ -32,6 +34,7 @@ export const repo = {
 export type { EntryInput } from './entries'
 export type { FoodInput } from './foods'
 export type { ReintroInput } from './reintro'
+export type { ShoppingInput } from './shopping'
 export type { SupplementInput } from './supplements'
 export type { SymptomInput } from './symptoms'
 export { BackupError, type BackupFile } from './backup'

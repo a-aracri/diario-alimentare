@@ -182,6 +182,37 @@ export interface ReintroTest {
   updatedAt: string
 }
 
+/** Reparti della lista della spesa. */
+export type ShoppingSection =
+  | 'verdura'
+  | 'frutta'
+  | 'carne-pesce'
+  | 'frigo'
+  | 'pane-pasta'
+  | 'farine'
+  | 'colazione'
+  | 'frutta-secca'
+  | 'dispensa'
+  | 'erbe-spezie'
+  | 'bevande'
+  | 'integratori'
+  | 'altro'
+
+/** ho: ce l'ho in casa; serve: da comprare. */
+export type ShoppingStatus = 'ho' | 'serve'
+
+export interface ShoppingItem {
+  id: string
+  name: string
+  section: ShoppingSection
+  note?: string
+  /** Assente finché non viene segnato. */
+  status?: ShoppingStatus
+  /** true per le voci aggiunte dall'utente. */
+  custom?: boolean
+  updatedAt: string
+}
+
 export interface Limits {
   /** Olio EVO: cucchiai al giorno. */
   oilTbspPerDay: number

@@ -4,6 +4,8 @@ import type {
   FoodTag,
   MealId,
   ReintroResult,
+  ShoppingSection,
+  ShoppingStatus,
   SymptomType,
   TimeHM,
   Unit,
@@ -98,4 +100,26 @@ export const ACUTE_TAG_LABEL: Partial<Record<FoodTag, string>> = {
   caffe: 'caffè non decaffeinato',
   menta: 'menta',
   'succo-frutta': 'succhi di frutta',
+}
+
+/** Reparti della lista della spesa, nell'ordine in cui vengono mostrati. */
+export const SHOPPING_SECTION_LABEL: Record<ShoppingSection, string> = {
+  verdura: 'Verdura',
+  frutta: 'Frutta',
+  'carne-pesce': 'Carne, pesce e uova',
+  frigo: 'Latticini delattosati e bevande vegetali',
+  'pane-pasta': 'Pane, pasta e cereali',
+  farine: 'Farine e lievito',
+  colazione: 'Colazione e dolci',
+  'frutta-secca': 'Frutta secca e semi',
+  dispensa: 'Condimenti e conserve',
+  'erbe-spezie': 'Erbe aromatiche e spezie',
+  bevande: 'Tè, tisane e bevande',
+  integratori: 'Integratori',
+  altro: 'Altro',
+}
+
+export const SHOPPING_STATUS_LABEL: Record<ShoppingStatus, string> = {
+  ho: 'Ce l’ho',
+  serve: 'Mi serve',
 }

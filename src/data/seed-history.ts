@@ -1,21 +1,23 @@
 /**
  * Valori precedenti dei dati precaricati che sono stati corretti.
  *
- * Il seed aggiunge solo i record mancanti. Per correggere un alimento o un
- * integratore già presente sul dispositivo, aggiungi qui com'era prima, con la
- * versione del seed che introduce la correzione (e incrementa SEED_VERSION in
- * src/repo/seed.ts). Al prossimo avvio il record prende i valori attuali di
- * ./fodmap.ts o ./piano.ts solo se è ancora identico a quelli precedenti, cioè
- * se l'utente non l'ha modificato.
+ * Il seed aggiunge solo i record mancanti. Per correggere un alimento, un
+ * integratore o una voce della lista della spesa già presente sul dispositivo,
+ * aggiungi qui com'era prima, con la versione del seed che introduce la
+ * correzione (e incrementa SEED_VERSION in src/repo/seed.ts). Al prossimo avvio
+ * il record prende i valori attuali di ./fodmap.ts, ./piano.ts o ./spesa.ts solo
+ * se è ancora identico a quelli precedenti, cioè se l'utente non l'ha modificato.
  */
 import type { SeedFood } from './fodmap'
 import type { SeedSupplement } from './piano'
+import type { SeedShoppingItem } from './spesa'
 
 export interface SeedRevision {
   /** Versione del seed che introduce la correzione. */
   version: number
   foods?: SeedFood[]
   supplements?: SeedSupplement[]
+  shopping?: SeedShoppingItem[]
 }
 
 const ACUTA = 'Sconsigliato in fase acuta di gastrite/reflusso.'

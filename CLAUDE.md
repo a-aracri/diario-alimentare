@@ -36,6 +36,7 @@ Prima di un commit: `npm run lint && npm test && npm run build`.
 src/
   data/fodmap.ts        alimenti precaricati del piano (stato, categoria, porzioni, tag)
   data/piano.ts         limiti, suggerimenti e ricette, fase acuta, integratori, gruppi FODMAP
+  data/spesa.ts         voci precaricate della lista della spesa (per reparto) e indicazioni
   model/                tipi del dominio (types.ts) ed etichette/costanti (constants.ts)
   lib/                  logica pura e testata: date, unità, ricerca, limiti, avvisi,
                         integratori, CSV, riepiloghi; più helper browser (files.ts, pwa.ts)
@@ -93,12 +94,14 @@ Flusso: `pages/components → hooks/use-data.ts → repo → Dexie`. Le scrittur
   Le eliminazioni passano da `removeWithTombstone` e lasciano una riga in `tombstones`.
 - Schema Dexie in `src/repo/db.ts`: per cambiarlo aggiungi `this.version(n+1)`, non modificare
   le versioni esistenti.
-- Dati precaricati: se modifichi `src/data/fodmap.ts` o gli integratori in `src/data/piano.ts`,
-  incrementa `SEED_VERSION` in `src/repo/seed.ts`. Il seed aggiunge solo i record mancanti e
-  rispetta modifiche ed eliminazioni dell'utente. Non cambiare gli `id` esistenti.
-  Se correggi un alimento o integratore già esistente, aggiungi i suoi valori precedenti in
-  `src/data/seed-history.ts` con la nuova versione: al prossimo avvio il record si aggiorna sul
-  dispositivo solo se è ancora identico a quei valori (cioè l'utente non l'ha modificato).
+- Dati precaricati: se modifichi `src/data/fodmap.ts`, gli integratori in `src/data/piano.ts` o la
+  lista della spesa in `src/data/spesa.ts`, incrementa `SEED_VERSION` in `src/repo/seed.ts`. Il
+  seed aggiunge solo i record mancanti e rispetta modifiche ed eliminazioni dell'utente. Non
+  cambiare gli `id` esistenti.
+  Se correggi un alimento, un integratore o una voce della spesa già esistente, aggiungi i suoi
+  valori precedenti in `src/data/seed-history.ts` con la nuova versione: al prossimo avvio il
+  record si aggiorna sul dispositivo solo se è ancora identico a quei valori (cioè l'utente non
+  l'ha modificato).
 - Il backup JSON (`repo.backup`) contiene tutte le tabelle; se cambi il formato incrementa
   `BACKUP_VERSION` e gestisci i file vecchi in `parseBackup`.
 
@@ -113,6 +116,13 @@ Flusso: `pages/components → hooks/use-data.ts → repo → Dexie`. Le scrittur
 - Latticini delattosati: più voci nello stesso pasto contano come una volta sola.
 - I limiti sono modificabili in Impostazioni (`settings.limits`); i valori del piano sono in
   `DEFAULT_LIMITS`.
+
+### Lista della spesa
+- Pagina `#/spesa` (da Altro), tabella `shopping`. Le voci precaricate prese dal database alimenti
+  hanno lo stesso id dell'alimento e devono essere consentite (permesso o con limite): lo verifica
+  `misc.test.ts`. Lo stato (`ho` = ce l'ho, `serve` = mi serve, assente = da segnare) è dell'utente
+  e il seed non lo tocca.
+- La vista si apre su "Mi serve" se c'è qualcosa da comprare; la ricerca guarda in tutta la lista.
 
 ### Diario condiviso (PDF, stampa, CSV)
 - Drawer "Condividi il diario" (`components/share-diary-drawer.tsx`), raggiungibile da

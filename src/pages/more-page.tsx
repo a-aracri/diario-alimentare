@@ -1,4 +1,12 @@
-import { ChevronRightIcon, DatabaseIcon, FlaskConicalIcon, PillIcon, SettingsIcon, ShareIcon } from 'lucide-react'
+import {
+  ChevronRightIcon,
+  DatabaseIcon,
+  FlaskConicalIcon,
+  PillIcon,
+  SettingsIcon,
+  ShareIcon,
+  ShoppingCartIcon,
+} from 'lucide-react'
 import { Page } from '@/components/page'
 import { Card } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
@@ -13,6 +21,12 @@ const LINKS = [
     label: 'Condividi il diario',
     description: 'PDF di un periodo da inviare alla nutrizionista',
     icon: ShareIcon,
+  },
+  {
+    to: '/spesa',
+    label: 'Lista della spesa',
+    description: 'Cosa ti serve e cosa hai già in casa',
+    icon: ShoppingCartIcon,
   },
   { to: '/integratori', label: 'Integratori', description: 'Checklist, durata e promemoria', icon: PillIcon },
   {

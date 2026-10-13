@@ -1,6 +1,7 @@
 import { SEED_FOODS } from '@/data/fodmap'
 import { DEFAULT_LIMITS, DEFAULT_REINTRO_GROUPS, DEFAULT_SUPPLEMENTS } from '@/data/piano'
 import { SEED_REVISIONS } from '@/data/seed-history'
+import { SEED_SHOPPING } from '@/data/spesa'
 import { today } from '@/lib/dates'
 import type { Settings } from '@/model/types'
 import { db } from './db'
@@ -8,11 +9,12 @@ import { nowISO } from './helpers'
 
 /**
  * Incrementa quando cambiano i dati precaricati: al prossimo avvio vengono
- * aggiunti gli alimenti e gli integratori nuovi, senza toccare quelli che
- * l'utente ha eliminato. Quelli già presenti cambiano solo se corretti in
- * src/data/seed-history.ts e non modificati dall'utente.
+ * aggiunti gli alimenti, gli integratori e le voci della lista della spesa
+ * nuovi, senza toccare quelli che l'utente ha eliminato. Quelli già presenti
+ * cambiano solo se corretti in src/data/seed-history.ts e non modificati
+ * dall'utente.
  */
-export const SEED_VERSION = 2
+export const SEED_VERSION = 3
 
 /** Campi che vengono dal seed; gli altri (preferito, data di inizio…) sono dell'utente. */
 const FOOD_FIELDS = ['name', 'category', 'status', 'maxPortion', 'note', 'tags', 'aliases'] as const
@@ -26,6 +28,7 @@ const SUPPLEMENT_FIELDS = [
   'note',
   'order',
 ] as const
+const SHOPPING_FIELDS = ['name', 'section', 'note'] as const
 
 /** Confronto per valore che ignora l'ordine delle chiavi e i campi `undefined`. */
 function sameValue(a: unknown, b: unknown): boolean {
@@ -73,7 +76,7 @@ export function defaultSettings(now = nowISO()): Settings {
 }
 
 export async function ensureSeed(): Promise<void> {
-  await db.transaction('rw', [db.foods, db.supplements, db.settings, db.tombstones], async () => {
+  await db.transaction('rw', [db.foods, db.supplements, db.shopping, db.settings, db.tombstones], async () => {
     const current = await db.settings.get('app')
     if (current && current.seedVersion >= SEED_VERSION) return
     const now = nowISO()
@@ -97,6 +100,13 @@ export async function ensureSeed(): Promise<void> {
       SUPPLEMENT_FIELDS,
       now,
     )
+    await applyRevisions(
+      db.shopping,
+      SEED_SHOPPING,
+      revisions.flatMap((r) => r.shopping ?? []),
+      SHOPPING_FIELDS,
+      now,
+    )
 
     const deletedFoods = deleted('foods')
     const existingFoods = new Set(await db.foods.toCollection().primaryKeys())
@@ -115,6 +125,15 @@ export async function ensureSeed(): Promise<void> {
       ).map((s) => ({
         ...s,
         ...(s.mode === 'giornaliero' && { startDate: current?.dietStartDate ?? today() }),
+        updatedAt: now,
+      })),
+    )
+
+    const deletedShopping = deleted('shopping')
+    const existingShopping = new Set(await db.shopping.toCollection().primaryKeys())
+    await db.shopping.bulkAdd(
+      SEED_SHOPPING.filter((i) => !existingShopping.has(i.id) && !deletedShopping.has(i.id)).map((i) => ({
+        ...i,
         updatedAt: now,
       })),
     )

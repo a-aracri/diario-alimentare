@@ -15,6 +15,7 @@ const SupplementsPage = lazy(() =>
   import('@/pages/supplements-page').then((m) => ({ default: m.SupplementsPage })),
 )
 const ReintroPage = lazy(() => import('@/pages/reintro-page').then((m) => ({ default: m.ReintroPage })))
+const ShoppingPage = lazy(() => import('@/pages/shopping-page').then((m) => ({ default: m.ShoppingPage })))
 const FoodsPage = lazy(() => import('@/pages/foods-page').then((m) => ({ default: m.FoodsPage })))
 const SettingsPage = lazy(() => import('@/pages/settings-page').then((m) => ({ default: m.SettingsPage })))
 const PrintPage = lazy(() => import('@/pages/print-page').then((m) => ({ default: m.PrintPage })))
@@ -27,6 +28,7 @@ const ROUTES: Record<string, React.ComponentType> = {
   '/altro': MorePage,
   '/integratori': SupplementsPage,
   '/reintroduzione': ReintroPage,
+  '/spesa': ShoppingPage,
   '/alimenti': FoodsPage,
   '/impostazioni': SettingsPage,
 }

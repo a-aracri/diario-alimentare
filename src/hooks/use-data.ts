@@ -57,6 +57,10 @@ export function useSupplementLogs(date: ISODate) {
   return useLiveQuery(() => repo.supplements.logsByDate(date), [date])
 }
 
+export function useShoppingItems() {
+  return useLiveQuery(() => repo.shopping.all(), [])
+}
+
 export function useReintroTests() {
   return useLiveQuery(() => repo.reintro.all(), [])
 }

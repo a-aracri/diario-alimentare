@@ -5,6 +5,7 @@ import type {
   Food,
   ReintroTest,
   Settings,
+  ShoppingItem,
   Supplement,
   SupplementLog,
   Symptom,
@@ -27,6 +28,7 @@ export class DiaryDB extends Dexie {
   supplementLogs!: EntityTable<SupplementLog, 'id'>
   reintroTests!: EntityTable<ReintroTest, 'id'>
   settings!: EntityTable<Settings, 'id'>
+  shopping!: EntityTable<ShoppingItem, 'id'>
   tombstones!: EntityTable<Tombstone, 'id'>
 
   constructor(name = 'diario-alimentare') {
@@ -42,6 +44,10 @@ export class DiaryDB extends Dexie {
       settings: 'id',
       tombstones: 'id, table, deletedAt',
     })
+    // Lista della spesa.
+    this.version(2).stores({
+      shopping: 'id',
+    })
   }
 }
 
@@ -54,6 +60,7 @@ export const TABLES = [
   'supplementLogs',
   'reintroTests',
   'settings',
+  'shopping',
   'tombstones',
 ] as const
 
