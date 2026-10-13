@@ -27,7 +27,7 @@ describe('evaluateEntry: stato alimento', () => {
   })
 
   it('informa per un alimento da verificare', () => {
-    const [w] = evaluateEntry({ draft: draft('ciliegie'), weekEntries: [], index, limits, acuteMode: false })
+    const [w] = evaluateEntry({ draft: draft('mais-dolce'), weekEntries: [], index, limits, acuteMode: false })
     expect(w).toMatchObject({ code: 'verificare', level: 'info' })
   })
 

@@ -26,7 +26,10 @@ export const DEFAULT_REINTRO_GROUPS = [
 /** Numero di giorni proposto per un nuovo test di reintroduzione. */
 export const DEFAULT_REINTRO_DAYS = 3
 
-export const DEFAULT_SUPPLEMENTS: Omit<Supplement, 'startDate' | 'updatedAt'>[] = [
+/** Integratore precaricato: la data di inizio arriva dalla data della dieta. */
+export type SeedSupplement = Omit<Supplement, 'startDate' | 'updatedAt'>
+
+export const DEFAULT_SUPPLEMENTS: SeedSupplement[] = [
   {
     id: 'probiotico',
     name: 'Probiotico (Dicoflor)',
@@ -41,12 +44,12 @@ export const DEFAULT_SUPPLEMENTS: Omit<Supplement, 'startDate' | 'updatedAt'>[] 
   {
     id: 'glutagenics',
     name: 'Glutagenics',
-    timing: 'Al mattino',
+    timing: 'Prima di colazione',
     mode: 'giornaliero',
     durationDays: 30,
     afterDuration: 'stop',
-    reminderTime: '10:00',
-    note: 'Per 1 mese.',
+    reminderTime: '07:30',
+    note: "Per 1 mese. Prendilo prima di colazione, aspetta un po' e poi fai colazione.",
     order: 2,
   },
   {
@@ -121,7 +124,8 @@ export const SUGGESTION_MEALS: Record<SuggestionKind, MealId[]> = {
 export const PLAN_NOTES: Record<SuggestionKind, string> = {
   colazione: 'Carboidrati + proteine/grassi. Scegli una delle 5 varianti.',
   spuntino: 'Mattina e pomeriggio, uno a scelta.',
-  pasto: 'Pranzo e cena: primo + secondo + contorno.',
+  pasto:
+    'Pranzo e cena: primo + secondo + contorno. Nel contorno puoi associare due verdure diverse, ognuna nella sua porzione.',
 }
 
 const teOTisana: SuggestionItem = {
@@ -141,8 +145,15 @@ export const SUGGESTIONS: Suggestion[] = [
     id: 'spuntino-yogurt',
     kind: 'spuntino',
     title: 'Yogurt delattosato',
-    description: 'Conta per i latticini delattosati della settimana.',
-    items: [{ choices: [{ foodId: 'yogurt-delattosato', quantity: 125, unit: 'g' }] }],
+    description: 'Anche greco. Conta per i latticini delattosati della settimana.',
+    items: [
+      {
+        choices: [
+          { foodId: 'yogurt-delattosato', quantity: 125, unit: 'g' },
+          { foodId: 'yogurt-greco-delattosato', quantity: 150, unit: 'g' },
+        ],
+      },
+    ],
   },
   {
     id: 'spuntino-tisana-biscotti',
@@ -200,11 +211,11 @@ export const SUGGESTIONS: Suggestion[] = [
   {
     id: 'colazione-2',
     kind: 'colazione',
-    title: 'Tè verde o tisana + 3 pancake',
+    title: 'Tè o tisana + 3 pancake',
     description:
-      "Tè verde o tisana senza zucchero + 3 pancake con farine permesse (riso, mandorle, quinoa), senza zucchero né lievito nell'impasto, con sciroppo d'acero 100%.",
+      "Tè deteinato (o tè verde, se stai bene) o tisana senza zucchero + 3 pancake con farine permesse (riso, mandorle, quinoa), senza zucchero né lievito nell'impasto, con sciroppo d'acero 100%.",
     items: [
-      { choices: [{ foodId: 'te-verde' }, { foodId: 'tisana' }] },
+      { choices: [{ foodId: 'te-deteinato' }, { foodId: 'te-verde' }, { foodId: 'tisana' }] },
       { choices: [{ foodId: 'pancake-con-farine-permesse', quantity: 3, unit: 'pezzi' }] },
       { choices: [{ foodId: 'sciroppo-d-acero', quantity: 1, unit: 'cucchiai' }] },
     ],

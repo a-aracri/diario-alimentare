@@ -25,7 +25,24 @@ describe('dati del piano', () => {
 
   it('contiene gli alimenti da verificare indicati', () => {
     const toCheck = SEED_FOODS.filter((f) => f.status === 'verificare').map((f) => f.id)
-    expect(toCheck).toEqual(expect.arrayContaining(['ciliegie', 'more', 'mais-dolce', 'pistacchi', 'melanzane']))
+    expect(toCheck).toEqual(expect.arrayContaining(['mais-dolce', 'pistacchi']))
+  })
+
+  it('include le indicazioni aggiuntive della nutrizionista', () => {
+    const food = (id: string) => SEED_FOODS.find((f) => f.id === id)
+    for (const [id, grams] of [
+      ['melanzane', 100],
+      ['cavolo-nero', 75],
+      ['broccoletti', 75],
+      ['ciliegie', 20],
+      ['more', 32],
+    ] as const) {
+      expect(food(id), id).toMatchObject({ status: 'limite', maxPortion: { amount: grams, unit: 'g' } })
+    }
+    expect(food('yogurt-greco-delattosato')?.tags).toContain('latticino-delattosato')
+    expect(food('polioli')?.status).toBe('evitare')
+    expect(searchFoods(foods, 'sorbitolo')[0]?.id).toBe('polioli')
+    expect(searchFoods(foods, 'cavolo nero')[0]?.id).toBe('cavolo-nero')
   })
 })
 
@@ -133,7 +150,7 @@ describe('ordine delle liste di alimenti', () => {
   it('è alfabetico dentro ogni gruppo, con permessi e con limite insieme', () => {
     const allowed = sorted.filter((f) => f.status === 'permesso' || f.status === 'limite').map((f) => f.name)
     expect(allowed).toEqual([...allowed].sort((a, b) => a.localeCompare(b, 'it')))
-    expect(allowed.slice(0, 3)).toEqual(['Bietole', 'Broccoli (solo teste)', 'Cappuccina'])
+    expect(allowed.slice(0, 3)).toEqual(['Bietole', 'Broccoletti', 'Broccoli (solo teste)'])
   })
 
   it('mostra un’etichetta solo dove cambia gruppo', () => {

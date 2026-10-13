@@ -96,6 +96,9 @@ Flusso: `pages/components → hooks/use-data.ts → repo → Dexie`. Le scrittur
 - Dati precaricati: se modifichi `src/data/fodmap.ts` o gli integratori in `src/data/piano.ts`,
   incrementa `SEED_VERSION` in `src/repo/seed.ts`. Il seed aggiunge solo i record mancanti e
   rispetta modifiche ed eliminazioni dell'utente. Non cambiare gli `id` esistenti.
+  Se correggi un alimento o integratore già esistente, aggiungi i suoi valori precedenti in
+  `src/data/seed-history.ts` con la nuova versione: al prossimo avvio il record si aggiorna sul
+  dispositivo solo se è ancora identico a quei valori (cioè l'utente non l'ha modificato).
 - Il backup JSON (`repo.backup`) contiene tutte le tabelle; se cambi il formato incrementa
   `BACKUP_VERSION` e gestisci i file vecchi in `parseBackup`.
 

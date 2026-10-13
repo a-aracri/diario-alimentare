@@ -66,6 +66,8 @@ const NOCI = 'Porzione indicata dal piano.'
 const FRUTTO = '1 frutto.'
 const DELATTOSATI = '150 g, una volta a settimana.'
 const ACUTA = 'Sconsigliato in fase acuta di gastrite/reflusso.'
+const POLIOLI = 'polioli (sorbitolo, mannitolo, maltitolo, xilitolo…)'
+const DA_PESARE = 'Solo se puoi pesarle: fuori casa, senza bilancia, evitale.'
 
 export const SEED_FOODS: SeedFood[] = [
   // --- Cereali e carboidrati: permessi -----------------------------------
@@ -91,16 +93,16 @@ export const SEED_FOODS: SeedFood[] = [
   }),
   ok('Pane senza glutine', 'cereali', {
     max: [100, 'g'],
-    note: 'Con farine consentite. Porzione 100 g.',
+    note: `Con farine consentite. Porzione 100 g. Va bene anche confezionato: controlla che in etichetta non ci siano ${POLIOLI}.`,
     aliases: ['panino', 'crostini'],
   }),
   ok('Crackers senza glutine', 'cereali', {
     max: [100, 'g'],
-    note: 'Con farine consentite. Porzione 100 g.',
+    note: `Con farine consentite. Porzione 100 g. Se confezionati, controlla che in etichetta non ci siano ${POLIOLI}.`,
   }),
   ok('Gallette di riso o mais', 'cereali', { aliases: ['gallette'] }),
   ok('Biscotti senza glutine', 'cereali', {
-    note: 'Con cereali consentiti: 2 nello spuntino, 6 a colazione.',
+    note: `Con cereali consentiti: 2 nello spuntino, 6 a colazione. Se confezionati, controlla che in etichetta non ci siano ${POLIOLI}.`,
     aliases: ['biscotti'],
   }),
   ok('Farina di riso', 'cereali', { max: [100, 'g'] }),
@@ -147,6 +149,11 @@ export const SEED_FOODS: SeedFood[] = [
 
   // --- Latte e latticini -------------------------------------------------
   lim('Yogurt delattosato', 'latticini', { note: DELATTOSATI, tags: ['latticino-delattosato'] }),
+  lim('Yogurt greco delattosato', 'latticini', {
+    note: `Solo se delattosato. ${DELATTOSATI}`,
+    tags: ['latticino-delattosato'],
+    aliases: ['yogurt greco'],
+  }),
   lim('Latte delattosato', 'latticini', { note: DELATTOSATI, tags: ['latticino-delattosato'] }),
   lim('Mozzarella delattosata', 'latticini', { note: DELATTOSATI, tags: ['latticino-delattosato'] }),
   lim('Formaggio delattosato', 'latticini', { note: DELATTOSATI, tags: ['latticino-delattosato'] }),
@@ -200,7 +207,9 @@ export const SEED_FOODS: SeedFood[] = [
   ok('Carote', 'verdure', { aliases: ['carota'] }),
   lim('Cavoletti di Bruxelles', 'verdure', { max: [38, 'g'] }),
   lim('Cavolo cinese', 'verdure', { max: [40, 'g'] }),
-  ok('Cavolo kale', 'verdure', { aliases: ['cavolo nero'] }),
+  ok('Cavolo kale', 'verdure'),
+  lim('Cavolo nero', 'verdure', { max: [75, 'g'] }),
+  lim('Broccoletti', 'verdure', { max: [75, 'g'], aliases: ['cime di rapa'] }),
   lim('Verza', 'verdure', { max: [40, 'g'] }),
   lim('Cavolo rosso', 'verdure', { max: [75, 'g'] }),
   lim('Cetrioli', 'verdure', { max: [75, 'g'], aliases: ['cetriolo'] }),
@@ -222,6 +231,7 @@ export const SEED_FOODS: SeedFood[] = [
   lim('Pomodori San Marzano', 'verdure', { max: [48, 'g'], aliases: ['pelati', 'passata'] }),
   lim('Concentrato di pomodoro 100%', 'verdure', { max: [22, 'g'] }),
   lim('Pomodori secchi', 'verdure', { max: [13, 'g'] }),
+  lim('Melanzane', 'verdure', { max: [100, 'g'], aliases: ['melanzana'] }),
   ok('Germogli di soia', 'verdure'),
   ok('Germogli di alfa alfa', 'verdure'),
   ok('Germogli di bambù', 'verdure'),
@@ -243,10 +253,6 @@ export const SEED_FOODS: SeedFood[] = [
   check('Mais dolce', 'verdure', {
     note: 'Come verdura: il mais compare tra gli alimenti da evitare.',
     aliases: ['mais'],
-  }),
-  check('Melanzane', 'verdure', {
-    note: 'Compaiono nelle idee del piano ma non nella lista dei permessi.',
-    aliases: ['melanzana'],
   }),
 
   // --- Erbe aromatiche e spezie ------------------------------------------
@@ -297,16 +303,8 @@ export const SEED_FOODS: SeedFood[] = [
     note: 'Gialla tendente al verde.',
     tags: ['frutto'],
   }),
-  check('Ciliegie', 'frutta', {
-    max: [20, 'g'],
-    note: 'Compaiono sia tra i permessi sia tra quelli da evitare.',
-    tags: ['frutto'],
-  }),
-  check('More', 'frutta', {
-    max: [32, 'g'],
-    note: 'Compaiono sia tra i permessi sia tra quelli da evitare.',
-    tags: ['frutto'],
-  }),
+  lim('Ciliegie', 'frutta', { max: [20, 'g'], note: DA_PESARE, tags: ['frutto'] }),
+  lim('More', 'frutta', { max: [32, 'g'], note: DA_PESARE, tags: ['frutto'] }),
   no('Albicocche', 'frutta', { tags: ['frutto'], aliases: ['albicocca'] }),
   no('Anguria', 'frutta', { tags: ['frutto'], aliases: ['cocomero'] }),
   no('Avocado', 'frutta'),
@@ -336,7 +334,7 @@ export const SEED_FOODS: SeedFood[] = [
   ok('Altri oli vegetali', 'condimenti', { aliases: ['olio di semi'] }),
   ok('Olio di cocco', 'condimenti'),
   ok('Olive verdi', 'condimenti', { aliases: ['olive'] }),
-  ok('Salsa di soia', 'condimenti'),
+  ok('Salsa di soia', 'condimenti', { note: 'Meglio senza glutine.' }),
   ok('Senape', 'condimenti'),
   ok('Sale', 'condimenti'),
   no('Brodo pronto', 'condimenti', { note: 'Piatto pronto ad alto FODMAP.', aliases: ['dado'] }),
@@ -350,7 +348,11 @@ export const SEED_FOODS: SeedFood[] = [
     note: 'Nel piano è indicato «100 cl»: verifica la quantità con la nutrizionista.',
   }),
   lim('Tè nero', 'bevande', { max: [250, 'g'], note: `No chai e oolong. ${ACUTA}`, tags: ['te'], aliases: ['te'] }),
-  lim('Tè verde', 'bevande', { max: [250, 'g'], note: ACUTA, tags: ['te'] }),
+  lim('Tè verde', 'bevande', {
+    max: [250, 'g'],
+    note: `Meglio il deteinato; se stai bene va bene il tè verde. ${ACUTA}`,
+    tags: ['te'],
+  }),
   lim('Tè deteinato', 'bevande', { max: [250, 'g'], aliases: ['te deteinato'] }),
   ok('Tisana', 'bevande', {
     note: 'No camomilla, finocchio, tarassaco.',
@@ -402,6 +404,25 @@ export const SEED_FOODS: SeedFood[] = [
   no('Melassa', 'dolci'),
   no('Miele', 'dolci'),
   no("Sciroppo d'agave", 'dolci'),
+  no('Polioli', 'dolci', {
+    note: 'Dolcificanti che finiscono in -olo, più l’isomalto. Controlla le etichette dei prodotti confezionati, come il pane.',
+    aliases: [
+      'sorbitolo',
+      'mannitolo',
+      'maltitolo',
+      'xilitolo',
+      'lattitolo',
+      'eritritolo',
+      'isomalto',
+      'E420',
+      'E421',
+      'E953',
+      'E965',
+      'E966',
+      'E967',
+      'E968',
+    ],
+  }),
 
   // --- Piatti e ricette del piano ----------------------------------------
   ok('Pancake con farine permesse', 'piatti', {
@@ -413,8 +434,8 @@ export const SEED_FOODS: SeedFood[] = [
   ok('Pinzimonio di carote', 'piatti'),
   ok('Panino con hamburger e insalata o cicoria', 'piatti', { note: 'Pane con farine consentite.' }),
   ok('Panino con tonno e pomodori o spinaci', 'piatti', { note: 'Pane con farine consentite.' }),
-  check('Panino con melanzane e alici marinate', 'piatti', {
-    note: 'Contiene melanzane (da verificare). Alici cotte.',
+  ok('Panino con melanzane e alici marinate', 'piatti', {
+    note: 'Pane con farine consentite. Melanzane max 100 g, alici cotte.',
   }),
   ok('Pasta con zucchine e gamberetti', 'piatti', { note: 'Pasta con farine consentite.' }),
   ok('Insalata di patate con tonno, pomodori, carote e maionese', 'piatti'),

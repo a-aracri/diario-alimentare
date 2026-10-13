@@ -1,5 +1,6 @@
 import { SEED_FOODS } from '@/data/fodmap'
 import { DEFAULT_LIMITS, DEFAULT_REINTRO_GROUPS, DEFAULT_SUPPLEMENTS } from '@/data/piano'
+import { SEED_REVISIONS } from '@/data/seed-history'
 import { today } from '@/lib/dates'
 import type { Settings } from '@/model/types'
 import { db } from './db'
@@ -7,10 +8,57 @@ import { nowISO } from './helpers'
 
 /**
  * Incrementa quando cambiano i dati precaricati: al prossimo avvio vengono
- * aggiunti gli alimenti e gli integratori nuovi, senza toccare quelli già
- * presenti (che l'utente può aver modificato) né quelli che ha eliminato.
+ * aggiunti gli alimenti e gli integratori nuovi, senza toccare quelli che
+ * l'utente ha eliminato. Quelli già presenti cambiano solo se corretti in
+ * src/data/seed-history.ts e non modificati dall'utente.
  */
-export const SEED_VERSION = 1
+export const SEED_VERSION = 2
+
+/** Campi che vengono dal seed; gli altri (preferito, data di inizio…) sono dell'utente. */
+const FOOD_FIELDS = ['name', 'category', 'status', 'maxPortion', 'note', 'tags', 'aliases'] as const
+const SUPPLEMENT_FIELDS = [
+  'name',
+  'timing',
+  'mode',
+  'durationDays',
+  'afterDuration',
+  'reminderTime',
+  'note',
+  'order',
+] as const
+
+/** Confronto per valore che ignora l'ordine delle chiavi e i campi `undefined`. */
+function sameValue(a: unknown, b: unknown): boolean {
+  const stable = (v: unknown) =>
+    JSON.stringify(v, (_, x) =>
+      x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort()) : x,
+    )
+  return stable(a) === stable(b)
+}
+
+/**
+ * Porta ai valori attuali del seed i record ancora identici a una loro
+ * versione precedente, cioè non modificati dall'utente.
+ */
+async function applyRevisions<S extends { id: string }, T extends S & { updatedAt: string }>(
+  table: { get(id: string): PromiseLike<T | undefined>; put(record: T): PromiseLike<unknown> },
+  current: S[],
+  previous: S[],
+  fields: readonly (keyof S)[],
+  now: string,
+): Promise<void> {
+  const latest = new Map(current.map((s) => [s.id, s]))
+  for (const old of previous) {
+    const next = latest.get(old.id)
+    const record = await table.get(old.id)
+    if (!next || !record) continue
+    if (!fields.every((k) => sameValue(record[k], old[k]))) continue
+    const updated: T = { ...record, ...next, updatedAt: now }
+    // I campi tolti dal seed (es. un sinonimo eliminato) spariscono anche dal record.
+    for (const k of fields) if (next[k] === undefined) delete updated[k]
+    await table.put(updated)
+  }
+}
 
 export function defaultSettings(now = nowISO()): Settings {
   return {
@@ -33,6 +81,22 @@ export async function ensureSeed(): Promise<void> {
     const tombstones = await db.tombstones.toArray()
     const deleted = (table: string) =>
       new Set(tombstones.filter((t) => t.table === table).map((t) => t.recordId))
+
+    const revisions = current ? SEED_REVISIONS.filter((r) => r.version > current.seedVersion) : []
+    await applyRevisions(
+      db.foods,
+      SEED_FOODS,
+      revisions.flatMap((r) => r.foods ?? []),
+      FOOD_FIELDS,
+      now,
+    )
+    await applyRevisions(
+      db.supplements,
+      DEFAULT_SUPPLEMENTS,
+      revisions.flatMap((r) => r.supplements ?? []),
+      SUPPLEMENT_FIELDS,
+      now,
+    )
 
     const deletedFoods = deleted('foods')
     const existingFoods = new Set(await db.foods.toCollection().primaryKeys())
