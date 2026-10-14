@@ -110,7 +110,10 @@ function EntryEditor({
     setForm((f) => ({ ...f, [key]: value }))
 
   const food = form.foodId ? index?.byId.get(form.foodId) : undefined
-  const quantity = parseQuantity(form.quantity)
+  // Il testo libero non ha quantità e unità; restano solo per le voci libere che le avevano già.
+  const [hadQuantity] = useState(() => !entry?.foodId && entry?.quantity != null)
+  const showQuantity = !!form.foodId || hadQuantity
+  const quantity = showQuantity ? parseQuantity(form.quantity) : undefined
 
   const warnings = useMemo(() => {
     if (!index || !settings || !weekEntries || !form.name.trim()) return []
@@ -244,8 +247,8 @@ function EntryEditor({
               placeholder="Es. al ristorante: riso con verdure grigliate, acqua"
             />
             <FieldDescription>
-              Testo libero, anche più cose insieme. Gli avvisi del piano valgono solo per gli
-              alimenti del database.
+              Testo libero, anche più cose insieme e, se vuoi, le quantità. Gli avvisi del piano
+              valgono solo per gli alimenti del database.
             </FieldDescription>
           </Field>
           <Button variant="outline" className="h-11 w-full" onClick={() => setStep('pick')}>
@@ -295,33 +298,35 @@ function EntryEditor({
         </div>
       )}
 
-      <div className="grid grid-cols-[1fr_1fr] gap-3">
-        <Field>
-          <FieldLabel htmlFor="entry-quantity">Quantità</FieldLabel>
-          <Input
-            id="entry-quantity"
-            inputMode="decimal"
-            placeholder="—"
-            value={form.quantity}
-            onChange={(e) => set('quantity', e.target.value)}
-          />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="entry-unit">Unità</FieldLabel>
-          <NativeSelect
-            id="entry-unit"
-            className="w-full"
-            value={form.unit}
-            onChange={(e) => set('unit', e.target.value as Unit)}
-          >
-            {UNITS.map((u) => (
-              <NativeSelectOption key={u.id} value={u.id}>
-                {u.label}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        </Field>
-      </div>
+      {showQuantity && (
+        <div className="grid grid-cols-[1fr_1fr] gap-3">
+          <Field>
+            <FieldLabel htmlFor="entry-quantity">Quantità</FieldLabel>
+            <Input
+              id="entry-quantity"
+              inputMode="decimal"
+              placeholder="—"
+              value={form.quantity}
+              onChange={(e) => set('quantity', e.target.value)}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="entry-unit">Unità</FieldLabel>
+            <NativeSelect
+              id="entry-unit"
+              className="w-full"
+              value={form.unit}
+              onChange={(e) => set('unit', e.target.value as Unit)}
+            >
+              {UNITS.map((u) => (
+                <NativeSelectOption key={u.id} value={u.id}>
+                  {u.label}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          </Field>
+        </div>
+      )}
       {food?.maxPortion && (
         <Button
           variant="secondary"

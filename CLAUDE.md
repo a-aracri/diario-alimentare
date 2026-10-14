@@ -103,7 +103,8 @@ Flusso: `pages/components → hooks/use-data.ts → repo → Dexie`. Le scrittur
   record si aggiorna sul dispositivo solo se è ancora identico a quei valori (cioè l'utente non
   l'ha modificato).
 - Voci a testo libero (senza `foodId`, es. un pasto fuori casa, da "Scrivi liberamente" nella
-  ricerca): il testo sta in `name` su una riga sola (`freeTextName` unisce le righe con virgole);
+  ricerca): il testo sta in `name` su una riga sola (`freeTextName` unisce le righe con virgole),
+  senza quantità e unità (il modulo le mostra solo per le voci libere che le avevano già);
   avvisi e contatori le collegano a un alimento solo se il nome coincide.
 - Il backup JSON (`repo.backup`) contiene tutte le tabelle; se cambi il formato incrementa
   `BACKUP_VERSION` e gestisci i file vecchi in `parseBackup`.
