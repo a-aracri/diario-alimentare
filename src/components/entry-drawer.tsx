@@ -1,9 +1,9 @@
-import { ArrowLeftRightIcon, Trash2Icon } from 'lucide-react'
+import { ArrowLeftRightIcon, SearchIcon, Trash2Icon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Field, FieldLabel } from '@/components/ui/field'
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Textarea } from '@/components/ui/textarea'
@@ -15,6 +15,7 @@ import {
   useWeekEntries,
 } from '@/hooks/use-data'
 import { nowTime, today } from '@/lib/dates'
+import { freeTextName } from '@/lib/foods'
 import { formatPortion, parseQuantity, quantityText } from '@/lib/units'
 import { evaluateEntry } from '@/lib/warnings'
 import { CATEGORY_LABEL, MEAL_LABEL, MEALS, STATUS_LABEL, UNITS } from '@/model/constants'
@@ -150,9 +151,9 @@ function EntryEditor({
   }
 
   async function save(addAnother: boolean) {
-    const name = form.name.trim()
+    const name = freeTextName(form.name)
     if (!name) {
-      toast.error('Scrivi il nome dell’alimento.')
+      toast.error('Scrivi cosa hai mangiato.')
       return
     }
     let foodId = form.foodId
@@ -233,19 +234,23 @@ function EntryEditor({
       ) : (
         <div className="space-y-3">
           <Field>
-            <FieldLabel htmlFor="entry-name">Alimento o bevanda</FieldLabel>
-            <div className="flex gap-2">
-              <Input
-                id="entry-name"
-                value={form.name}
-                onChange={(e) => set('name', e.target.value)}
-                placeholder="Nome"
-              />
-              <Button variant="outline" className="h-11 shrink-0" onClick={() => setStep('pick')}>
-                Cerca
-              </Button>
-            </div>
+            <FieldLabel htmlFor="entry-name">Cosa hai mangiato</FieldLabel>
+            <Textarea
+              id="entry-name"
+              rows={3}
+              autoFocus={!form.name}
+              value={form.name}
+              onChange={(e) => set('name', e.target.value)}
+              placeholder="Es. al ristorante: riso con verdure grigliate, acqua"
+            />
+            <FieldDescription>
+              Testo libero, anche più cose insieme. Gli avvisi del piano valgono solo per gli
+              alimenti del database.
+            </FieldDescription>
           </Field>
+          <Button variant="outline" className="h-11 w-full" onClick={() => setStep('pick')}>
+            <SearchIcon /> Cerca nel database
+          </Button>
           <label className="flex min-h-11 items-center gap-3 text-sm">
             <Checkbox
               checked={form.saveAsFood}

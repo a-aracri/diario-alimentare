@@ -122,6 +122,20 @@ export function FoodPicker({ foods, recentIds, acuteMode, onPick, onFreeText }: 
           </div>
         ) : (
           <div className="space-y-4">
+            <button
+              type="button"
+              onClick={() => onFreeText('')}
+              className="flex min-h-14 w-full items-center gap-3 rounded-lg border border-dashed px-3 py-2 text-left hover:bg-muted"
+            >
+              <PencilLineIcon className="size-5 shrink-0 text-muted-foreground" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium">Scrivi liberamente</span>
+                <span className="block text-xs text-muted-foreground">
+                  Per esempio un pasto fuori casa: descrivi cosa hai mangiato
+                </span>
+              </span>
+              <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground" />
+            </button>
             {favorites.length > 0 && (
               <section className="space-y-1">
                 <h3 className="px-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">

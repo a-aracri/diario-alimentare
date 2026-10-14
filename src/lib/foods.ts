@@ -25,6 +25,19 @@ export function buildFoodIndex(foods: Food[]): FoodIndex {
   return { byId, byName }
 }
 
+/**
+ * Nome di una voce scritta a testo libero: le righe diventano un elenco separato
+ * da virgole, così la voce resta su una riga nel diario, nel PDF e nel CSV.
+ * Dopo una riga che finisce con ":" o "." si va avanti con uno spazio.
+ */
+export function freeTextName(text: string): string {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim().replace(/[,;]+$/, '').trim())
+    .filter(Boolean)
+    .reduce((name, line) => (name ? `${name}${/[:.!?]$/.test(name) ? ' ' : ', '}${line}` : line), '')
+}
+
 /** Trova l'alimento di una voce: per id, altrimenti per nome esatto. */
 export function resolveFood(
   entry: Pick<Entry, 'foodId' | 'name'>,

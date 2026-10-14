@@ -6,7 +6,7 @@ import { foods } from '@/test/fixtures'
 import type { ShoppingItem, Supplement } from '@/model/types'
 import { toCSV } from './csv'
 import { addDays, dateRange, diffDays, guessMeal, isBackupDue, weekStart } from './dates'
-import { groupLabelAt, searchFoods, sortForList } from './foods'
+import { freeTextName, groupLabelAt, searchFoods, sortForList } from './foods'
 import { groupShopping, shoppingCounts } from './shopping'
 import { isReminderDue, supplementStatus } from './supplements'
 
@@ -74,6 +74,27 @@ describe('ricerca alimenti', () => {
 
   it('mette prima le corrispondenze a inizio nome', () => {
     expect(searchFoods(foods, 'riso')[0].id).toBe('riso')
+  })
+})
+
+describe('testo libero', () => {
+  it('unisce le righe in un elenco con le virgole', () => {
+    expect(freeTextName('Pizza margherita senza glutine\n\n  acqua frizzante  ')).toBe(
+      'Pizza margherita senza glutine, acqua frizzante',
+    )
+  })
+
+  it('non raddoppia la punteggiatura a fine riga', () => {
+    expect(freeTextName('riso,\r\nzucchine grigliate;\npollo')).toBe('riso, zucchine grigliate, pollo')
+  })
+
+  it('dopo i due punti o il punto continua con uno spazio', () => {
+    expect(freeTextName('Al ristorante:\nriso\nacqua')).toBe('Al ristorante: riso, acqua')
+    expect(freeTextName('Riso in bianco.\nPoi un caffè')).toBe('Riso in bianco. Poi un caffè')
+  })
+
+  it('lascia com’è una riga sola', () => {
+    expect(freeTextName('  Sushi: nigiri di salmone, edamame  ')).toBe('Sushi: nigiri di salmone, edamame')
   })
 })
 
