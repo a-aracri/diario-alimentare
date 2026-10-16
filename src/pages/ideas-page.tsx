@@ -3,11 +3,28 @@ import { useState } from 'react'
 import { AcuteAdvice } from '@/components/acute-banner'
 import { Page, SectionTitle } from '@/components/page'
 import { SuggestionDrawer } from '@/components/suggestion-drawer'
+import { Notice } from '@/components/warning-list'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { PLAN_NOTES, SUGGESTIONS, type Suggestion, type SuggestionKind } from '@/data/piano'
+import {
+  BREAKFAST_GUIDE,
+  PLAN_NOTES,
+  SUGGESTION_GROUP_NOTES,
+  SUGGESTIONS,
+  type Suggestion,
+  type SuggestionKind,
+} from '@/data/piano'
 import { useSettings } from '@/hooks/use-data'
 import { useRoute } from '@/hooks/use-route'
 import { useSelectedDate } from '@/hooks/selected-date'
@@ -21,6 +38,32 @@ const TABS: { id: SuggestionKind | 'acuta'; label: string }[] = [
   { id: 'acuta', label: 'Gastrite' },
 ]
 
+const eggsLabel = (n: number) => (n === 0 ? 'Senza uova' : n === 1 ? '1 uovo' : `${n} uova`)
+
+function BreakfastGuide() {
+  return (
+    <Card size="sm">
+      <CardHeader>
+        <CardTitle className="text-base leading-snug">{BREAKFAST_GUIDE.title}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <ul className="space-y-1">
+          {BREAKFAST_GUIDE.parts.map((p) => (
+            <li key={p.label}>
+              <span className="font-medium">{p.label}:</span> {p.text}
+            </li>
+          ))}
+        </ul>
+        <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+          {BREAKFAST_GUIDE.notes.map((n) => (
+            <li key={n}>{n}</li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  )
+}
+
 export function IdeasPage() {
   const { params } = useRoute()
   const { date } = useSelectedDate()
@@ -32,31 +75,28 @@ export function IdeasPage() {
     <Card key={s.id} size="sm">
       <CardHeader>
         <CardTitle className="text-base leading-snug">{s.title}</CardTitle>
+        {s.eggs != null && (
+          <CardAction>
+            <Badge variant="secondary">{eggsLabel(s.eggs)}</Badge>
+          </CardAction>
+        )}
         {s.description && <CardDescription>{s.description}</CardDescription>}
       </CardHeader>
-      {(s.recipe || s.hint) && (
+      {(s.ingredients || s.flags || s.hint) && (
         <CardContent className="space-y-2">
-          {s.hint && <p className="text-sm text-muted-foreground">{s.hint}</p>}
-          {s.recipe && (
-            <details className="group rounded-lg border px-3">
-              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between text-sm font-medium [&::-webkit-details-marker]:hidden">
-                Ricetta{s.recipe.servings ? ` (${s.recipe.servings})` : ''}
-                <span className="text-muted-foreground group-open:rotate-180">⌄</span>
-              </summary>
-              <div className="space-y-2 pb-3 text-sm">
-                <ul className="list-disc pl-5">
-                  {s.recipe.ingredients.map((i) => (
-                    <li key={i}>{i}</li>
-                  ))}
-                </ul>
-                <ol className="list-decimal space-y-1 pl-5">
-                  {s.recipe.steps.map((step) => (
-                    <li key={step}>{step}</li>
-                  ))}
-                </ol>
-              </div>
-            </details>
+          {s.ingredients && (
+            <ul className="list-disc space-y-0.5 pl-5 text-sm">
+              {s.ingredients.map((i) => (
+                <li key={i}>{i}</li>
+              ))}
+            </ul>
           )}
+          {s.flags?.map((f) => (
+            <Notice key={f.text} level={f.level}>
+              {f.text}
+            </Notice>
+          ))}
+          {s.hint && <p className="text-sm text-muted-foreground">{s.hint}</p>}
         </CardContent>
       )}
       <CardFooter className="bg-transparent">
@@ -91,9 +131,17 @@ export function IdeasPage() {
         {(['colazione', 'spuntino', 'pasto'] as const).map((kind) => (
           <TabsContent key={kind} value={kind} className="space-y-3 pt-2">
             <p className="px-1 text-sm text-muted-foreground">{PLAN_NOTES[kind]}</p>
+            {kind === 'colazione' && <BreakfastGuide />}
             {groups(kind).map(({ group, items }) => (
               <div key={group} className="space-y-3">
-                {group && <SectionTitle>{group}</SectionTitle>}
+                {group && (
+                  <SectionTitle>
+                    {group}
+                    {SUGGESTION_GROUP_NOTES[group] && (
+                      <span className="font-normal"> · {SUGGESTION_GROUP_NOTES[group]}</span>
+                    )}
+                  </SectionTitle>
+                )}
                 {items.map(card)}
               </div>
             ))}

@@ -2,12 +2,14 @@
  * Valori precedenti dei dati precaricati che sono stati corretti.
  *
  * Il seed aggiunge solo i record mancanti. Per correggere un alimento, un
- * integratore o una voce della lista della spesa già presente sul dispositivo,
- * aggiungi qui com'era prima, con la versione del seed che introduce la
- * correzione (e incrementa SEED_VERSION in src/repo/seed.ts). Al prossimo avvio
- * il record prende i valori attuali di ./fodmap.ts, ./piano.ts o ./spesa.ts solo
- * se è ancora identico a quelli precedenti, cioè se l'utente non l'ha modificato.
+ * integratore, una voce della lista della spesa o un limite del piano già
+ * presente sul dispositivo, aggiungi qui com'era prima, con la versione del seed
+ * che introduce la correzione (e incrementa SEED_VERSION in src/repo/seed.ts).
+ * Al prossimo avvio il record (o il limite) prende i valori attuali di
+ * ./fodmap.ts, ./piano.ts o ./spesa.ts solo se è ancora identico a quelli
+ * precedenti, cioè se l'utente non l'ha modificato.
  */
+import type { Limits } from '@/model/types'
 import type { SeedFood } from './fodmap'
 import type { SeedSupplement } from './piano'
 import type { SeedShoppingItem } from './spesa'
@@ -18,9 +20,12 @@ export interface SeedRevision {
   foods?: SeedFood[]
   supplements?: SeedSupplement[]
   shopping?: SeedShoppingItem[]
+  /** Limiti precedenti: confrontati con `settings.limits`, campo per campo. */
+  limits?: Partial<Limits>
 }
 
 const ACUTA = 'Sconsigliato in fase acuta di gastrite/reflusso.'
+const POLIOLI = 'polioli (sorbitolo, mannitolo, maltitolo, xilitolo…)'
 
 export const SEED_REVISIONS: SeedRevision[] = [
   {
@@ -115,6 +120,71 @@ export const SEED_REVISIONS: SeedRevision[] = [
         note: 'Per 1 mese.',
         order: 2,
       },
+    ],
+  },
+  {
+    // Nuove regole della nutrizionista: uova, patate e colazioni.
+    version: 4,
+    limits: { eggsPerWeek: 6 },
+    foods: [
+      {
+        id: 'patate',
+        name: 'Patate',
+        category: 'cereali',
+        status: 'permesso',
+        maxPortion: { amount: 100, unit: 'g' },
+        note: 'Porzione 100 g. Evitare gli integrali.',
+        aliases: ['patata'],
+      },
+      {
+        id: 'gallette-di-riso-o-mais',
+        name: 'Gallette di riso o mais',
+        category: 'cereali',
+        status: 'permesso',
+        aliases: ['gallette'],
+      },
+      {
+        id: 'biscotti-senza-glutine',
+        name: 'Biscotti senza glutine',
+        category: 'cereali',
+        status: 'permesso',
+        note: `Con cereali consentiti: 2 nello spuntino, 6 a colazione. Se confezionati, controlla che in etichetta non ci siano ${POLIOLI}.`,
+        aliases: ['biscotti'],
+      },
+      {
+        id: 'uova',
+        name: 'Uova',
+        category: 'proteine',
+        status: 'limite',
+        note: 'Max 6 a settimana.',
+        tags: ['uovo'],
+        aliases: ['uovo', 'frittata'],
+      },
+      { id: 'margarina', name: 'Margarina', category: 'condimenti', status: 'permesso' },
+      {
+        id: 'marmellata',
+        name: 'Marmellata',
+        category: 'dolci',
+        status: 'limite',
+        note: 'Un velo, come nella colazione 1.',
+      },
+      {
+        id: 'pancake-con-farine-permesse',
+        name: 'Pancake con farine permesse',
+        category: 'piatti',
+        status: 'permesso',
+        note: "Farine di riso, mandorle o quinoa; senza zucchero né lievito nell'impasto.",
+      },
+    ],
+    shopping: [
+      { id: 'uova', name: 'Uova', section: 'carne-pesce', note: 'Max 6 a settimana.' },
+      {
+        id: 'farina-di-mandorle',
+        name: 'Farina di mandorle',
+        section: 'farine',
+        note: 'Per la torta di mandorle e i pancake.',
+      },
+      { id: 'margarina', name: 'Margarina', section: 'dispensa' },
     ],
   },
 ]

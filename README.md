@@ -15,7 +15,8 @@ Pensata per iPhone ("Aggiungi a Home"), funziona offline e salva i dati solo sul
 - Integratori con checklist giornaliera e promemoria
 - Lista della spesa con gli alimenti consentiti del piano, gli ingredienti delle ricette e gli
   integratori, per reparto: per ogni voce "Ce l’ho" o "Mi serve", più voci personali
-- Idee del piano (colazioni con ricette, spuntini, pranzo e cena) da aggiungere con un tocco
+- Idee del piano da aggiungere con un tocco: colazioni (veloci, overnight, con cottura e salate,
+  con ingredienti, uova usate e segnalazioni), spuntini, pranzo e cena
 - Modalità fase acuta gastrite/reflusso
 - Fase di reintroduzione per gruppo FODMAP
 - Condivisione del diario per un periodo a scelta: un PDF leggibile da mandare alla nutrizionista

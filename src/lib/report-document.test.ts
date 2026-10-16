@@ -140,7 +140,7 @@ describe('buildReportDocument', () => {
     expect(doc.weeks[0].title).toBe("Settimana dal 5 all'11 ottobre 2026")
     const line = (id: string) => doc.weeks[0].lines.find((l) => l.id === id)!
     expect(line('olio')).toMatchObject({ ok: false, detail: 'mar 6 ott: 5 cucchiai (limite 4 al giorno)' })
-    expect(line('uova').detail).toBe('0 (limite 6 a settimana)')
+    expect(line('uova').detail).toBe('0 (limite 8 a settimana)')
     expect(line('latticini').detail).toBe('0 volte (limite 1 volta a settimana)')
     expect(line('frutta').detail).toBe('Sempre entro il limite (1 per spuntino)')
     expect(line('evitare').detail).toBe('Aglio')

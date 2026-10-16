@@ -85,7 +85,11 @@ export const SEED_FOODS: SeedFood[] = [
   ok('Sorgo', 'cereali', { max: [100, 'g'], note: CEREALI }),
   ok('Tapioca', 'cereali', { max: [100, 'g'], note: CEREALI }),
   ok('Teff', 'cereali', { max: [100, 'g'], note: CEREALI }),
-  ok('Patate', 'cereali', { max: [100, 'g'], note: CEREALI, aliases: ['patata'] }),
+  ok('Patate', 'cereali', {
+    max: [250, 'g'],
+    note: 'Porzione 250 g a pranzo e a cena. Non sono un’opzione di colazione.',
+    aliases: ['patata'],
+  }),
   ok('Pasta senza glutine', 'cereali', {
     max: [100, 'g'],
     note: 'Con farine consentite (riso, mais, quinoa…). Porzione 100 g.',
@@ -100,12 +104,21 @@ export const SEED_FOODS: SeedFood[] = [
     max: [100, 'g'],
     note: `Con farine consentite. Porzione 100 g. Se confezionati, controlla che in etichetta non ci siano ${POLIOLI}.`,
   }),
-  ok('Gallette di riso o mais', 'cereali', { aliases: ['gallette'] }),
+  ok('Gallette di riso o mais', 'cereali', {
+    max: [5, 'pezzi'],
+    note: '4–5 a colazione. Vanno bene con qualsiasi cereale ammesso, non integrali.',
+    aliases: ['gallette'],
+  }),
+  lim('Fiocchi di quinoa', 'cereali', {
+    max: [70, 'g'],
+    note: 'Circa 70 g a colazione, come equivalenza per i carboidrati con 100 g di pane: dose da verificare con la nutrizionista.',
+  }),
   ok('Biscotti senza glutine', 'cereali', {
-    note: `Con cereali consentiti: 2 nello spuntino, 6 a colazione. Se confezionati, controlla che in etichetta non ci siano ${POLIOLI}.`,
+    note: `Con cereali consentiti: 2 nello spuntino, circa 80 g a colazione. Se confezionati, controlla che in etichetta non ci siano ${POLIOLI}.`,
     aliases: ['biscotti'],
   }),
   ok('Farina di riso', 'cereali', { max: [100, 'g'] }),
+  ok('Farina di quinoa', 'cereali', { max: [100, 'g'] }),
   ok('Fecola di patate', 'cereali'),
   ok('Pop corn', 'cereali', { note: 'Indicati tra gli spuntini.', aliases: ['popcorn'] }),
 
@@ -144,7 +157,11 @@ export const SEED_FOODS: SeedFood[] = [
   ok('Cozze', 'proteine', { max: [200, 'g'], note: PESCE }),
   ok('Calamari', 'proteine', { max: [200, 'g'], note: PESCE }),
   ok('Polpo', 'proteine', { max: [200, 'g'], note: PESCE }),
-  lim('Uova', 'proteine', { note: 'Max 6 a settimana.', tags: ['uovo'], aliases: ['uovo', 'frittata'] }),
+  lim('Uova', 'proteine', {
+    note: 'Max 8 a settimana, comprese quelle a colazione.',
+    tags: ['uovo'],
+    aliases: ['uovo', 'frittata'],
+  }),
   no('Salsicce', 'proteine'),
 
   // --- Latte e latticini -------------------------------------------------
@@ -194,9 +211,23 @@ export const SEED_FOODS: SeedFood[] = [
   lim('Semi di girasole', 'noci-semi', { max: [24, 'g'], note: NOCI }),
   lim('Semi di lino', 'noci-semi', { max: [2, 'cucchiai'], note: NOCI }),
   lim('Semi di sesamo', 'noci-semi', { max: [11, 'g'], note: NOCI }),
+  lim('Tahina', 'noci-semi', {
+    max: [11, 'g'],
+    note: 'Crema di sesamo: max 11 g, come i semi di sesamo, finché la nutrizionista non conferma i 15 g.',
+    aliases: ['tahin', 'tahini', 'crema di sesamo'],
+  }),
   lim('Semi di zucca', 'noci-semi', { max: [2, 'cucchiai'], note: NOCI }),
+  lim('Crema di semi di zucca', 'noci-semi', {
+    max: [15, 'g'],
+    note: 'Circa 15 g (2 cucchiaini colmi) a colazione.',
+    aliases: ['burro di semi di zucca'],
+  }),
   lim('Spirulina in polvere', 'noci-semi', { max: [8, 'g'], note: NOCI }),
   no('Anacardi', 'noci-semi'),
+  no('Arachidi', 'noci-semi', {
+    note: 'Allergia: niente arachidi, burro di arachidi e olio di arachide.',
+    aliases: ['burro di arachidi', 'olio di arachide', 'olio di arachidi', 'noccioline'],
+  }),
   check('Pistacchi', 'noci-semi', {
     note: 'Compaiono sia nelle idee del piano sia tra gli alimenti da evitare.',
   }),
@@ -325,7 +356,7 @@ export const SEED_FOODS: SeedFood[] = [
   ok('Aceto', 'condimenti'),
   lim('Ketchup', 'condimenti', { note: 'Con moderazione.' }),
   ok('Maionese', 'condimenti'),
-  ok('Margarina', 'condimenti'),
+  ok('Margarina', 'condimenti', { note: 'Senza latte né olio di arachide.' }),
   lim('Olio EVO', 'condimenti', {
     note: 'Max 4 cucchiai al giorno.',
     tags: ['olio-evo'],
@@ -400,7 +431,7 @@ export const SEED_FOODS: SeedFood[] = [
   lim('Zucchero', 'dolci', { note: 'Con moderazione.' }),
   lim('Zucchero di canna integrale', 'dolci', { note: 'Con moderazione.' }),
   lim('Cacao amaro', 'dolci', { max: [8, 'g'], note: ACUTA, tags: ['cioccolato'] }),
-  lim('Marmellata', 'dolci', { note: 'Un velo, come nella colazione 1.' }),
+  lim('Marmellata', 'dolci', { note: 'Un velo.' }),
   no('Melassa', 'dolci'),
   no('Miele', 'dolci'),
   no("Sciroppo d'agave", 'dolci'),
@@ -426,7 +457,7 @@ export const SEED_FOODS: SeedFood[] = [
 
   // --- Piatti e ricette del piano ----------------------------------------
   ok('Pancake con farine permesse', 'piatti', {
-    note: "Farine di riso, mandorle o quinoa; senza zucchero né lievito nell'impasto.",
+    note: "Farine di riso, mandorle o quinoa; senza zucchero né lievito nell'impasto. Contiene 1 uovo ogni 3 pancake.",
   }),
   ok('Porridge di quinoa', 'piatti'),
   ok('Pudding di riso', 'piatti'),

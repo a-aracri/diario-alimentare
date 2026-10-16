@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { SEED_FOODS } from '@/data/fodmap'
-import { SUGGESTIONS } from '@/data/piano'
+import { DEFAULT_LIMITS, SUGGESTIONS } from '@/data/piano'
 import { SEED_SHOPPING } from '@/data/spesa'
-import { foods } from '@/test/fixtures'
+import { foods, index } from '@/test/fixtures'
 import type { ShoppingItem, Supplement } from '@/model/types'
 import { toCSV } from './csv'
 import { addDays, dateRange, diffDays, guessMeal, isBackupDue, weekStart } from './dates'
 import { freeTextName, groupLabelAt, searchFoods, sortForList } from './foods'
+import { exceedsPortion, hasTag } from './limits'
 import { groupShopping, shoppingCounts } from './shopping'
 import { isReminderDue, supplementStatus } from './supplements'
+import { toEggs } from './units'
 
 describe('dati del piano', () => {
   it('gli id degli alimenti sono unici', () => {
@@ -45,6 +47,73 @@ describe('dati del piano', () => {
     expect(food('polioli')?.status).toBe('evitare')
     expect(searchFoods(foods, 'sorbitolo')[0]?.id).toBe('polioli')
     expect(searchFoods(foods, 'cavolo nero')[0]?.id).toBe('cavolo-nero')
+  })
+
+  it('include le regole aggiornate su uova, patate, tahina e arachidi', () => {
+    const food = (id: string) => index.byId.get(id)
+    expect(DEFAULT_LIMITS.eggsPerWeek).toBe(8)
+    expect(food('patate')?.maxPortion).toEqual({ amount: 250, unit: 'g' })
+    expect(food('tahina')?.maxPortion).toEqual({ amount: 11, unit: 'g' })
+    expect(food('arachidi')?.status).toBe('evitare')
+    expect(searchFoods(foods, 'burro di arachidi')[0]?.id).toBe('arachidi')
+    expect(searchFoods(foods, 'tahini')[0]?.id).toBe('tahina')
+  })
+})
+
+describe('colazioni del piano', () => {
+  const colazioni = SUGGESTIONS.filter((s) => s.kind === 'colazione')
+  const choices = colazioni.flatMap((s) => s.items.flatMap((i) => i.choices.map((c) => ({ s, c }))))
+
+  it('sono le opzioni A–E divise per categoria', () => {
+    expect(colazioni.map((s) => `${s.group} ${s.title.split('.')[0]}`)).toEqual([
+      'Veloce A',
+      'Overnight B1',
+      'Overnight B2',
+      'Overnight B3',
+      'Overnight B4',
+      'Con cottura C',
+      'Salata D',
+      'Salata E',
+    ])
+    for (const s of colazioni) expect(s.ingredients?.length, s.id).toBeGreaterThan(0)
+  })
+
+  it('le uova indicate sono quelle che finiscono nel diario, qualunque alternativa si scelga', () => {
+    for (const s of colazioni) {
+      let eggs = 0
+      for (const item of s.items.filter((i) => !i.optional)) {
+        const counts = item.choices.map((c) =>
+          hasTag(index.byId.get(c.foodId), 'uovo') ? toEggs(c.quantity, c.unit) : 0,
+        )
+        expect(new Set(counts).size, s.id).toBe(1)
+        eggs += counts[0]
+      }
+      expect(eggs, s.id).toBe(s.eggs)
+    }
+    expect(colazioni.map((s) => s.eggs)).toEqual([0, 0, 0, 0, 0, 1, 2, 2])
+  })
+
+  it('usano solo alimenti consentiti, nelle porzioni del piano', () => {
+    for (const { s, c } of choices) {
+      const food = index.byId.get(c.foodId)
+      expect(['permesso', 'limite'], `${s.id} → ${c.foodId}`).toContain(food?.status)
+      expect(exceedsPortion(c, food), `${s.id} → ${c.foodId}`).toBe(false)
+    }
+  })
+
+  it('niente patate, burro di arachidi, hummus né pane con olive e cetrioli', () => {
+    const ids = choices.map(({ c }) => c.foodId)
+    for (const id of ['patate', 'fecola-di-patate', 'arachidi', 'ceci', 'olive-verdi', 'olive-nere']) {
+      expect(ids).not.toContain(id)
+    }
+    const text = colazioni.map((s) => [s.title, ...(s.ingredients ?? [])].join(' ').toLowerCase()).join(' ')
+    for (const word of ['patat', 'burro di arachidi', 'hummus', 'ceci', 'olive']) expect(text).not.toContain(word)
+  })
+
+  it('segnala la dose dei fiocchi di quinoa e la tahina da confermare', () => {
+    const flags = (id: string) => colazioni.find((s) => s.id === id)?.flags?.map((f) => f.text).join(' ')
+    expect(flags('colazione-b4-fiocchi-di-quinoa')).toContain('da verificare con la nutrizionista')
+    expect(flags('colazione-a-bevanda-e-biscotti')).toContain('max 11 g')
   })
 })
 

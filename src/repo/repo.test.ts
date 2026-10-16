@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { SEED_FOODS } from '@/data/fodmap'
-import { DEFAULT_SUPPLEMENTS } from '@/data/piano'
+import { DEFAULT_LIMITS, DEFAULT_SUPPLEMENTS } from '@/data/piano'
 import { SEED_REVISIONS } from '@/data/seed-history'
 import { SEED_SHOPPING } from '@/data/spesa'
 import { BackupError, repo } from './index'
@@ -75,6 +75,29 @@ describe('correzioni dei dati precaricati', () => {
     await fromVersion1()
     expect(await repo.foods.get('ciliegie')).toMatchObject({ status: 'verificare', note: 'le peso sempre' })
     expect(await repo.foods.get('more')).toBeUndefined()
+  })
+
+  it('porta a 8 le uova a settimana solo se il limite era quello del piano', async () => {
+    await repo.settings.update({ seedVersion: 3, limits: { ...DEFAULT_LIMITS, eggsPerWeek: 6 } })
+    await repo.init()
+    expect((await repo.settings.get()).limits).toEqual(DEFAULT_LIMITS)
+
+    await repo.settings.update({ seedVersion: 3, limits: { ...DEFAULT_LIMITS, eggsPerWeek: 7, oilTbspPerDay: 3 } })
+    await repo.init()
+    expect((await repo.settings.get()).limits).toMatchObject({ eggsPerWeek: 7, oilTbspPerDay: 3 })
+  })
+
+  it('aggiorna patate e uova e aggiunge i nuovi alimenti della colazione', async () => {
+    const v4 = SEED_REVISIONS.find((r) => r.version === 4)!
+    for (const id of ['patate', 'uova']) {
+      await db.foods.put({ ...v4.foods!.find((f) => f.id === id)!, updatedAt: '2026-10-01T00:00:00.000Z' })
+    }
+    await db.foods.delete('tahina')
+    await repo.settings.update({ seedVersion: 3 })
+    await repo.init()
+    expect((await repo.foods.get('patate'))?.maxPortion).toEqual({ amount: 250, unit: 'g' })
+    expect((await repo.foods.get('uova'))?.note).toContain('Max 8')
+    expect(await repo.foods.get('tahina')).toMatchObject({ maxPortion: { amount: 11, unit: 'g' } })
   })
 
   it('aggiorna l\'integratore mantenendo la data di inizio', async () => {

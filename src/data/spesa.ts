@@ -121,7 +121,7 @@ export const SEED_SHOPPING: SeedShoppingItem[] = [
     'polpo',
   ]),
   other('carne-pesce', 'Carne macinata', 'Per hamburger e ragù fatti in casa.'),
-  food('carne-pesce', 'uova', { note: 'Max 6 a settimana.' }),
+  food('carne-pesce', 'uova', { note: 'Max 8 a settimana.' }),
 
   ...foods('frigo', [
     'yogurt-delattosato',
@@ -151,10 +151,11 @@ export const SEED_SHOPPING: SeedShoppingItem[] = [
   ]),
   food('pane-pasta', 'pane-senza-glutine', { note: POLIOLI }),
   food('pane-pasta', 'crackers-senza-glutine', { note: POLIOLI }),
+  food('pane-pasta', 'fiocchi-di-quinoa', { note: 'Per la colazione overnight.' }),
 
   ...foods('farine', ['farina-di-riso', 'farina-di-mais', 'fecola-di-patate']),
-  other('farine', 'Farina di mandorle', 'Per la torta di mandorle e i pancake.'),
-  other('farine', 'Farina di quinoa', 'Per i pancake.'),
+  other('farine', 'Farina di mandorle', 'Per la torta di mandorle.'),
+  food('farine', 'farina-di-quinoa', { note: 'Per i pancake.' }),
   other('farine', 'Lievito per dolci', 'Per la torta di mandorle.'),
 
   food('colazione', 'biscotti-senza-glutine', { note: POLIOLI }),
@@ -183,6 +184,8 @@ export const SEED_SHOPPING: SeedShoppingItem[] = [
     'semi-di-zucca',
     'burro-di-semi-o-noci',
     'burro-di-mandorle-100',
+    'crema-di-semi-di-zucca',
+    'tahina',
     'spirulina-in-polvere',
     'uvetta-sultanina',
   ]),
@@ -195,7 +198,6 @@ export const SEED_SHOPPING: SeedShoppingItem[] = [
     'maionese',
     'ketchup',
     'senape',
-    'margarina',
     'olive-verdi',
     'olive-nere',
     'concentrato-di-pomodoro-100',
@@ -203,6 +205,7 @@ export const SEED_SHOPPING: SeedShoppingItem[] = [
   ]),
   food('dispensa', 'altri-oli-vegetali', { name: 'Olio di semi' }),
   food('dispensa', 'salsa-di-soia', { note: 'Meglio senza glutine.' }),
+  food('dispensa', 'margarina', { note: 'Senza latte né olio di arachide.' }),
   other('dispensa', 'Tonno in scatola'),
 
   ...foods('erbe-spezie', [

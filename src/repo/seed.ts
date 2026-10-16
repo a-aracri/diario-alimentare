@@ -3,7 +3,7 @@ import { DEFAULT_LIMITS, DEFAULT_REINTRO_GROUPS, DEFAULT_SUPPLEMENTS } from '@/d
 import { SEED_REVISIONS } from '@/data/seed-history'
 import { SEED_SHOPPING } from '@/data/spesa'
 import { today } from '@/lib/dates'
-import type { Settings } from '@/model/types'
+import type { Limits, Settings } from '@/model/types'
 import { db } from './db'
 import { nowISO } from './helpers'
 
@@ -11,10 +11,10 @@ import { nowISO } from './helpers'
  * Incrementa quando cambiano i dati precaricati: al prossimo avvio vengono
  * aggiunti gli alimenti, gli integratori e le voci della lista della spesa
  * nuovi, senza toccare quelli che l'utente ha eliminato. Quelli già presenti
- * cambiano solo se corretti in src/data/seed-history.ts e non modificati
- * dall'utente.
+ * (e i limiti) cambiano solo se corretti in src/data/seed-history.ts e non
+ * modificati dall'utente.
  */
-export const SEED_VERSION = 3
+export const SEED_VERSION = 4
 
 /** Campi che vengono dal seed; gli altri (preferito, data di inizio…) sono dell'utente. */
 const FOOD_FIELDS = ['name', 'category', 'status', 'maxPortion', 'note', 'tags', 'aliases'] as const
@@ -61,6 +61,17 @@ async function applyRevisions<S extends { id: string }, T extends S & { updatedA
     for (const k of fields) if (next[k] === undefined) delete updated[k]
     await table.put(updated)
   }
+}
+
+/** Porta ai valori del piano i limiti ancora uguali a un loro valore precedente. */
+function reviseLimits(limits: Limits, previous: Partial<Limits>[]): Limits {
+  const out = { ...limits }
+  for (const old of previous) {
+    for (const key of Object.keys(old) as (keyof Limits)[]) {
+      if (out[key] === old[key]) out[key] = DEFAULT_LIMITS[key]
+    }
+  }
+  return out
 }
 
 export function defaultSettings(now = nowISO()): Settings {
@@ -138,7 +149,9 @@ export async function ensureSeed(): Promise<void> {
       })),
     )
 
-    const base = current ?? defaultSettings(now)
+    const base = current
+      ? { ...current, limits: reviseLimits(current.limits, revisions.flatMap((r) => r.limits ?? [])) }
+      : defaultSettings(now)
     await db.settings.put({ ...base, seedVersion: SEED_VERSION, updatedAt: now })
   })
 }

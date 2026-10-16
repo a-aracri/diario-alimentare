@@ -92,13 +92,14 @@ describe('computeCounters', () => {
       entry({ date: '2026-10-06', foodId: 'olio-evo', quantity: 2, unit: 'cucchiai' }),
       entry({ date: '2026-10-05', foodId: 'uova', quantity: 4, unit: 'pezzi' }),
       entry({ date: '2026-10-07', foodId: 'uova', quantity: 3, unit: 'pezzi' }),
+      entry({ date: '2026-10-07', foodId: 'uova', quantity: 2, unit: 'pezzi', meal: 'colazione' }),
       entry({ date: '2026-10-07', foodId: 'kiwi', meal: 'spuntino-pomeriggio' }),
     ]
     const counters = Object.fromEntries(
       computeCounters('2026-10-07', week, index, limits).map((c) => [c.id, c]),
     )
     expect(counters.olio).toMatchObject({ value: 5, max: 4, over: true })
-    expect(counters.uova).toMatchObject({ value: 7, max: 6, over: true })
+    expect(counters.uova).toMatchObject({ value: 9, max: 8, over: true })
     expect(counters.latticini).toMatchObject({ value: 0, over: false })
     expect(counters['spuntino-pomeriggio']).toMatchObject({ value: 1, over: false })
   })

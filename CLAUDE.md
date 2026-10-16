@@ -101,7 +101,8 @@ Flusso: `pages/components → hooks/use-data.ts → repo → Dexie`. Le scrittur
   Se correggi un alimento, un integratore o una voce della spesa già esistente, aggiungi i suoi
   valori precedenti in `src/data/seed-history.ts` con la nuova versione: al prossimo avvio il
   record si aggiorna sul dispositivo solo se è ancora identico a quei valori (cioè l'utente non
-  l'ha modificato).
+  l'ha modificato). Lo stesso vale per i limiti di `DEFAULT_LIMITS` (campo `limits` della
+  revisione, confrontato con `settings.limits`).
 - Voci a testo libero (senza `foodId`, es. un pasto fuori casa, da "Scrivi liberamente" nella
   ricerca): il testo sta in `name` su una riga sola (`freeTextName` unisce le righe con virgole),
   senza quantità e unità (il modulo le mostra solo per le voci libere che le avevano già);
@@ -119,7 +120,18 @@ Flusso: `pages/components → hooks/use-data.ts → repo → Dexie`. Le scrittur
   1 uovo ≈ 55 g; quantità assente = 1 unità (1 cucchiaio d'olio, 1 uovo).
 - Latticini delattosati: più voci nello stesso pasto contano come una volta sola.
 - I limiti sono modificabili in Impostazioni (`settings.limits`); i valori del piano sono in
-  `DEFAULT_LIMITS`.
+  `DEFAULT_LIMITS` (uova: 8 a settimana, comprese quelle a colazione).
+
+### Colazioni e altre idee del piano
+- `SUGGESTIONS` in `src/data/piano.ts`, pagina `#/idee`. Le colazioni hanno categoria (`group`:
+  Veloce, Overnight, Con cottura, Salata), `ingredients` con i grammi, `eggs` (uova usate),
+  `flags` (segnalazioni: `info` da verificare, `warning` attenzione) e le voci da aggiungere
+  (`items`, con eventuale `note` salvata sulla voce del diario). `BREAKFAST_GUIDE` spiega come
+  comporle.
+- Le uova di un'opzione devono comparire tra le voci (`uova`), così contano nel limite: lo
+  verifica `misc.test.ts`, insieme a porzioni e alimenti consentiti.
+- Niente patate a colazione, niente arachidi (allergia), niente hummus di ceci (da chiarire con
+  la nutrizionista). Tahina max 11 g finché la nutrizionista non conferma i 15 g.
 
 ### Lista della spesa
 - Pagina `#/spesa` (da Altro), tabella `shopping`. Le voci precaricate prese dal database alimenti

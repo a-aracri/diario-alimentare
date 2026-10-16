@@ -87,7 +87,7 @@ function SuggestionForm({
 
   const drafts = useMemo(() => {
     const out: (EntryInput & { food?: Food })[] = []
-    suggestion.items.forEach((_, i) => {
+    suggestion.items.forEach((item, i) => {
       const sel = selection[i]
       const choice = choices[i][sel.choice]
       if (!sel.checked || !choice) return
@@ -100,6 +100,7 @@ function SuggestionForm({
         name: food?.name ?? choice.foodId,
         quantity: choice.quantity,
         unit: choice.unit,
+        note: item.note,
         food,
       })
     })
@@ -159,6 +160,7 @@ function SuggestionForm({
                 <Checkbox checked={sel.checked} onCheckedChange={(checked) => update({ checked })} className="size-5" />
                 <span className="text-sm font-medium">
                   {opts.length === 1 ? label(opts[0]) : item.fromTag ? 'Frutto a scelta' : 'Una a scelta'}
+                  {item.note && <span className="font-normal text-muted-foreground"> · {item.note.toLowerCase()}</span>}
                   {item.optional && <span className="font-normal text-muted-foreground"> (facoltativo)</span>}
                 </span>
               </label>

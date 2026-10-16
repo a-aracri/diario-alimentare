@@ -88,13 +88,13 @@ describe('evaluateEntry: limiti', () => {
     ).toEqual([])
   })
 
-  it('uova: avvisa oltre 6 a settimana', () => {
+  it('uova: avvisa oltre 8 a settimana, comprese quelle a colazione', () => {
     const week = [
-      entry({ foodId: 'uova', quantity: 2, unit: 'pezzi', date: '2026-10-05' }),
-      entry({ foodId: 'uova', quantity: 3, unit: 'pezzi', date: '2026-10-06' }),
+      entry({ foodId: 'uova', quantity: 2, unit: 'pezzi', date: '2026-10-05', meal: 'colazione' }),
+      entry({ foodId: 'uova', quantity: 4, unit: 'pezzi', date: '2026-10-06' }),
     ]
-    expect(codes(draft('uova', { quantity: 1, unit: 'pezzi' }), week)).toEqual([])
-    expect(codes(draft('uova', { quantity: 2, unit: 'pezzi' }), week)).toEqual(['uova'])
+    expect(codes(draft('uova', { quantity: 2, unit: 'pezzi', meal: 'colazione' }), week)).toEqual([])
+    expect(codes(draft('uova', { quantity: 3, unit: 'pezzi', meal: 'colazione' }), week)).toEqual(['uova'])
   })
 
   it('latticini delattosati: avvisa alla seconda volta in settimana', () => {
