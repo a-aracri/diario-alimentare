@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { useBackupData, useSettings } from '@/hooks/use-data'
-import { isBackupDue, today } from '@/lib/dates'
+import { isBackupReminderDue, today } from '@/lib/dates'
 import { shareFile } from '@/lib/files'
 import { cn } from '@/lib/utils'
 import { repo } from '@/repo'
@@ -64,10 +64,23 @@ export function BackupButton({
   )
 }
 
-/** Avviso se l'ultimo backup ha più di 7 giorni. */
+/** Avviso se l'ultimo backup ha più di 7 giorni; "Non ora" lo nasconde per 7 giorni. */
 export function BackupReminder() {
   const settings = useSettings()
-  if (!settings || !isBackupDue(settings.lastBackupAt, settings.createdAt)) return null
+  if (
+    !settings ||
+    !isBackupReminderDue(settings.lastBackupAt, settings.createdAt, settings.backupReminderSnoozedAt)
+  ) {
+    return null
+  }
+
+  async function snooze() {
+    await repo.settings.update({ backupReminderSnoozedAt: new Date().toISOString() })
+    toast('Te lo ricordo tra 7 giorni', {
+      description: 'Puoi fare il backup quando vuoi da Altro → Impostazioni e backup.',
+    })
+  }
+
   return (
     <Alert className="border-sky-500/30 bg-sky-500/5 text-sky-700 dark:text-sky-400">
       <DatabaseBackupIcon />
@@ -76,7 +89,12 @@ export function BackupReminder() {
       </AlertTitle>
       <AlertDescription className="space-y-2 text-foreground/80">
         <p>I dati sono salvati solo su questo iPhone: esporta una copia di sicurezza.</p>
-        <BackupButton label="Fai il backup ora" variant="outline" className="h-10" />
+        <div className="flex flex-wrap gap-2">
+          <BackupButton label="Fai il backup ora" variant="outline" />
+          <Button variant="ghost" className="h-11" onClick={snooze}>
+            Non ora
+          </Button>
+        </div>
       </AlertDescription>
     </Alert>
   )

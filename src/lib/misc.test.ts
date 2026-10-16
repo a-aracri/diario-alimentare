@@ -5,7 +5,7 @@ import { SEED_SHOPPING } from '@/data/spesa'
 import { foods, index } from '@/test/fixtures'
 import type { ShoppingItem, Supplement } from '@/model/types'
 import { toCSV } from './csv'
-import { addDays, dateRange, diffDays, guessMeal, isBackupDue, weekStart } from './dates'
+import { addDays, dateRange, diffDays, guessMeal, isBackupDue, isBackupReminderDue, weekStart } from './dates'
 import { freeTextName, groupLabelAt, searchFoods, sortForList } from './foods'
 import { exceedsPortion, hasTag } from './limits'
 import { groupShopping, shoppingCounts } from './shopping'
@@ -216,6 +216,13 @@ describe('promemoria backup', () => {
   it('senza backup usa la data del primo avvio', () => {
     expect(isBackupDue(undefined, '2026-10-05T00:00:00Z', now)).toBe(false)
     expect(isBackupDue(undefined, '2026-09-30T00:00:00Z', now)).toBe(true)
+  })
+  it('"Non ora" nasconde il promemoria per 7 giorni', () => {
+    const due = (snoozedAt?: string) => isBackupReminderDue(undefined, '2026-09-01T00:00:00Z', snoozedAt, now)
+    expect(due()).toBe(true)
+    expect(due('2026-10-06T12:00:00Z')).toBe(false)
+    expect(due('2026-10-01T12:00:00Z')).toBe(true)
+    expect(isBackupReminderDue('2026-10-08T12:00:00Z', '2026-09-01T00:00:00Z', undefined, now)).toBe(false)
   })
 })
 

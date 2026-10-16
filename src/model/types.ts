@@ -233,6 +233,8 @@ export interface Settings {
   acuteMode: boolean
   reintroGroups: string[]
   lastBackupAt?: string
+  /** Quando il promemoria del backup è stato rimandato con "Non ora". */
+  backupReminderSnoozedAt?: string
   /** Data del primo avvio: serve per il promemoria backup. */
   createdAt: string
   seedVersion: number

@@ -106,6 +106,9 @@ export function guessMeal(time: TimeHM): MealId {
   return 'fuori-pasto'
 }
 
+const olderThan = (iso: string, now: Date, days: number) =>
+  now.getTime() - new Date(iso).getTime() > days * 86_400_000
+
 /** true se l'ultimo backup (o il primo avvio) risale a più di `days` giorni fa. */
 export function isBackupDue(
   lastBackupAt: string | undefined,
@@ -113,6 +116,19 @@ export function isBackupDue(
   now: Date = new Date(),
   days = 7,
 ): boolean {
-  const ref = new Date(lastBackupAt ?? createdAt).getTime()
-  return now.getTime() - ref > days * 86_400_000
+  return olderThan(lastBackupAt ?? createdAt, now, days)
+}
+
+/**
+ * true se va mostrato il promemoria del backup: backup scaduto e promemoria
+ * non rimandato con "Non ora" negli ultimi `days` giorni.
+ */
+export function isBackupReminderDue(
+  lastBackupAt: string | undefined,
+  createdAt: string,
+  snoozedAt: string | undefined,
+  now: Date = new Date(),
+  days = 7,
+): boolean {
+  return isBackupDue(lastBackupAt, createdAt, now, days) && (!snoozedAt || olderThan(snoozedAt, now, days))
 }
