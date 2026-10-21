@@ -129,6 +129,8 @@ export const SEED_SHOPPING: SeedShoppingItem[] = [
     'latte-delattosato',
     'mozzarella-delattosata',
     'formaggio-delattosato',
+    'parmigiano',
+    'pecorino',
     'bevanda-di-riso',
     'bevanda-di-mandorla',
     'bevanda-di-macadamia',
