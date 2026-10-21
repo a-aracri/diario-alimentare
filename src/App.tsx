@@ -2,6 +2,8 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { BottomNav } from '@/components/bottom-nav'
 import { ThemeColor } from '@/components/theme-color'
 import { Button } from '@/components/ui/button'
+import { SimpleModeContext } from '@/hooks/simple-mode'
+import { useSettings } from '@/hooks/use-data'
 import { useRoute } from '@/hooks/use-route'
 import { DiaryPage } from '@/pages/diary-page'
 import { SymptomsPage } from '@/pages/symptoms-page'
@@ -33,8 +35,12 @@ const ROUTES: Record<string, React.ComponentType> = {
   '/impostazioni': SettingsPage,
 }
 
+/** Pagine del piano, nascoste nel diario semplice. */
+const PLAN_ROUTES = ['/idee', '/integratori', '/reintroduzione', '/spesa']
+
 export default function App() {
   const route = useRoute()
+  const settings = useSettings()
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading')
 
   useEffect(() => {
@@ -67,24 +73,29 @@ export default function App() {
       </div>
     )
   }
-  if (state === 'loading') return <div className="min-h-dvh bg-background" />
+  // Le impostazioni servono prima delle pagine: decidono se mostrare il piano.
+  if (state === 'loading' || !settings) return <div className="min-h-dvh bg-background" />
+  const simple = !!settings.simpleMode
 
   if (route.path === '/stampa') {
     return (
-      <Suspense fallback={null}>
-        <PrintPage params={route.params} />
-      </Suspense>
+      <SimpleModeContext value={simple}>
+        <Suspense fallback={null}>
+          <PrintPage params={route.params} />
+        </Suspense>
+      </SimpleModeContext>
     )
   }
 
-  const Current = ROUTES[route.path] ?? DiaryPage
+  const hidden = simple && PLAN_ROUTES.includes(route.path)
+  const Current = (!hidden && ROUTES[route.path]) || DiaryPage
   return (
-    <>
+    <SimpleModeContext value={simple}>
       <ThemeColor />
       <Suspense fallback={<div className="min-h-dvh" />}>
         <Current />
       </Suspense>
-      <BottomNav path={route.path} />
-    </>
+      <BottomNav path={hidden ? '/' : route.path} />
+    </SimpleModeContext>
   )
 }

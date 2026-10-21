@@ -11,8 +11,9 @@ import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Textarea } from '@/components/ui/textarea'
+import { useSimpleMode } from '@/hooks/simple-mode'
 import { useFoods } from '@/hooks/use-data'
-import { groupLabelAt, searchFoods, sortForList } from '@/lib/foods'
+import { groupLabelAt, searchFoods, sortByName, sortForList } from '@/lib/foods'
 import { formatPortion, parseQuantity, quantityText } from '@/lib/units'
 import { cn } from '@/lib/utils'
 import { CATEGORY_LABEL, STATUS_LABEL, UNITS } from '@/model/constants'
@@ -34,6 +35,7 @@ const TAG_OPTIONS: { tag: FoodTag; label: string }[] = [
 
 export function FoodsPage() {
   const foods = useFoods()
+  const simple = useSimpleMode()
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<FoodStatus | ''>('')
   const [onlyMine, setOnlyMine] = useState(false)
@@ -41,18 +43,19 @@ export function FoodsPage() {
 
   const groups = useMemo(() => {
     let list = foods ?? []
-    if (status) list = list.filter((f) => f.status === status)
+    if (status && !simple) list = list.filter((f) => f.status === status)
     if (onlyMine) list = list.filter((f) => f.custom || f.favorite)
-    // Nella ricerca contano prima i risultati più pertinenti; nelle categorie i vietati vanno in fondo.
+    // Nella ricerca contano prima i risultati più pertinenti; nelle categorie i vietati vanno in fondo
+    // (nel diario semplice gli stati non contano: ordine alfabetico).
     if (query.trim()) return [{ category: null, foods: searchFoods(list, query, 200), grouped: false }]
     return (Object.keys(CATEGORY_LABEL) as FoodCategory[])
       .map((category) => ({
         category,
-        foods: sortForList(list.filter((f) => f.category === category)),
-        grouped: true,
+        foods: (simple ? sortByName : sortForList)(list.filter((f) => f.category === category)),
+        grouped: !simple,
       }))
       .filter((g) => g.foods.length)
-  }, [foods, query, status, onlyMine])
+  }, [foods, query, status, onlyMine, simple])
 
   return (
     <Page
@@ -77,20 +80,22 @@ export function FoodsPage() {
             aria-label="Cerca alimento"
           />
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <NativeSelect
-            className="w-full"
-            aria-label="Filtra per stato"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as FoodStatus | '')}
-          >
-            <NativeSelectOption value="">Tutti gli stati</NativeSelectOption>
-            {Object.entries(STATUS_LABEL).map(([id, label]) => (
-              <NativeSelectOption key={id} value={id}>
-                {label}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+        <div className={cn('grid gap-2', !simple && 'grid-cols-2')}>
+          {!simple && (
+            <NativeSelect
+              className="w-full"
+              aria-label="Filtra per stato"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as FoodStatus | '')}
+            >
+              <NativeSelectOption value="">Tutti gli stati</NativeSelectOption>
+              {Object.entries(STATUS_LABEL).map(([id, label]) => (
+                <NativeSelectOption key={id} value={id}>
+                  {label}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          )}
           <Button
             variant={onlyMine ? 'default' : 'outline'}
             aria-pressed={onlyMine}
@@ -126,15 +131,15 @@ export function FoodsPage() {
                           {f.name}
                           {f.favorite && <StarIcon className="ml-1 inline size-3.5 fill-amber-400 text-amber-500" />}
                         </span>
-                        {(f.maxPortion || f.custom) && (
+                        {((f.maxPortion && !simple) || f.custom) && (
                           <span className="block text-xs text-muted-foreground">
-                            {[f.maxPortion && `max ${formatPortion(f.maxPortion)}`, f.custom && 'personale']
+                            {[!simple && f.maxPortion && `max ${formatPortion(f.maxPortion)}`, f.custom && 'personale']
                               .filter(Boolean)
                               .join(' · ')}
                           </span>
                         )}
                       </span>
-                      <StatusBadge status={f.status} />
+                      {!simple && <StatusBadge status={f.status} />}
                     </button>
                   </li>
                 )
@@ -158,6 +163,7 @@ export function FoodsPage() {
 }
 
 function FoodForm({ food, initialName, onClose }: { food?: Food; initialName: string; onClose: () => void }) {
+  const simple = useSimpleMode()
   const [name, setName] = useState(food?.name ?? initialName.trim())
   const [category, setCategory] = useState<FoodCategory>(food?.category ?? 'altro')
   const [status, setStatus] = useState<FoodStatus>(food?.status ?? 'verificare')
@@ -202,17 +208,19 @@ function FoodForm({ food, initialName, onClose }: { food?: Food; initialName: st
         <FieldLabel htmlFor="food-name">Nome</FieldLabel>
         <Input id="food-name" value={name} onChange={(e) => setName(e.target.value)} />
       </Field>
-      <div className="grid grid-cols-2 gap-3">
-        <Field>
-          <FieldLabel htmlFor="food-status">Stato</FieldLabel>
-          <NativeSelect id="food-status" className="w-full" value={status} onChange={(e) => setStatus(e.target.value as FoodStatus)}>
-            {Object.entries(STATUS_LABEL).map(([id, label]) => (
-              <NativeSelectOption key={id} value={id}>
-                {label}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        </Field>
+      <div className={cn('grid gap-3', !simple && 'grid-cols-2')}>
+        {!simple && (
+          <Field>
+            <FieldLabel htmlFor="food-status">Stato</FieldLabel>
+            <NativeSelect id="food-status" className="w-full" value={status} onChange={(e) => setStatus(e.target.value as FoodStatus)}>
+              {Object.entries(STATUS_LABEL).map(([id, label]) => (
+                <NativeSelectOption key={id} value={id}>
+                  {label}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          </Field>
+        )}
         <Field>
           <FieldLabel htmlFor="food-category">Categoria</FieldLabel>
           <NativeSelect
@@ -229,52 +237,59 @@ function FoodForm({ food, initialName, onClose }: { food?: Food; initialName: st
           </NativeSelect>
         </Field>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      {!simple && (
+        <div className="grid grid-cols-2 gap-3">
+          <Field>
+            <FieldLabel htmlFor="food-max">Porzione massima</FieldLabel>
+            <Input
+              id="food-max"
+              inputMode="decimal"
+              placeholder="Nessuna"
+              value={maxAmount}
+              onChange={(e) => setMaxAmount(e.target.value)}
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="food-unit">Unità</FieldLabel>
+            <NativeSelect id="food-unit" className="w-full" value={maxUnit} onChange={(e) => setMaxUnit(e.target.value as Unit)}>
+              {UNITS.map((u) => (
+                <NativeSelectOption key={u.id} value={u.id}>
+                  {u.label}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          </Field>
+        </div>
+      )}
+      {/* Le note degli alimenti precaricati sono indicazioni del piano. */}
+      {(!simple || !food || food.custom) && (
         <Field>
-          <FieldLabel htmlFor="food-max">Porzione massima</FieldLabel>
-          <Input
-            id="food-max"
-            inputMode="decimal"
-            placeholder="Nessuna"
-            value={maxAmount}
-            onChange={(e) => setMaxAmount(e.target.value)}
-          />
+          <FieldLabel htmlFor="food-note">Note</FieldLabel>
+          <Textarea id="food-note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
         </Field>
-        <Field>
-          <FieldLabel htmlFor="food-unit">Unità</FieldLabel>
-          <NativeSelect id="food-unit" className="w-full" value={maxUnit} onChange={(e) => setMaxUnit(e.target.value as Unit)}>
-            {UNITS.map((u) => (
-              <NativeSelectOption key={u.id} value={u.id}>
-                {u.label}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        </Field>
-      </div>
-      <Field>
-        <FieldLabel htmlFor="food-note">Note</FieldLabel>
-        <Textarea id="food-note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
-      </Field>
+      )}
 
       <label className="flex min-h-11 items-center gap-3 text-sm">
         <Checkbox checked={favorite} onCheckedChange={setFavorite} className="size-5" />
         Preferito
       </label>
 
-      <fieldset className="space-y-1">
-        <legend className="pb-1 text-sm font-medium">Contatori e fase acuta</legend>
-        <FieldDescription className="pb-1">Collega l’alimento ai limiti del piano.</FieldDescription>
-        {TAG_OPTIONS.map(({ tag, label }) => (
-          <label key={tag} className="flex min-h-10 items-center gap-3 text-sm">
-            <Checkbox
-              checked={tags.includes(tag)}
-              onCheckedChange={(checked) => setTags((t) => (checked ? [...t, tag] : t.filter((x) => x !== tag)))}
-              className="size-5"
-            />
-            {label}
-          </label>
-        ))}
-      </fieldset>
+      {!simple && (
+        <fieldset className="space-y-1">
+          <legend className="pb-1 text-sm font-medium">Contatori e fase acuta</legend>
+          <FieldDescription className="pb-1">Collega l’alimento ai limiti del piano.</FieldDescription>
+          {TAG_OPTIONS.map(({ tag, label }) => (
+            <label key={tag} className="flex min-h-10 items-center gap-3 text-sm">
+              <Checkbox
+                checked={tags.includes(tag)}
+                onCheckedChange={(checked) => setTags((t) => (checked ? [...t, tag] : t.filter((x) => x !== tag)))}
+                className="size-5"
+              />
+              {label}
+            </label>
+          ))}
+        </fieldset>
+      )}
 
       <div className={cn('flex flex-col gap-2 pb-[env(safe-area-inset-bottom)]')}>
         <Button className="h-11 text-base" onClick={save}>
@@ -288,7 +303,8 @@ function FoodForm({ food, initialName, onClose }: { food?: Food; initialName: st
       </div>
       {food && !food.custom && (
         <p className="text-xs text-muted-foreground">
-          Alimento del piano: le voci già registrate restano nel diario anche se lo elimini.
+          {simple ? 'Alimento predefinito' : 'Alimento del piano'}: le voci già registrate restano nel diario
+          anche se lo elimini.
         </p>
       )}
     </div>

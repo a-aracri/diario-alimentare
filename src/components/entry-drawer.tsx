@@ -7,6 +7,7 @@ import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Textarea } from '@/components/ui/textarea'
+import { useSimpleMode } from '@/hooks/simple-mode'
 import {
   useFoodIndex,
   useFoods,
@@ -91,6 +92,8 @@ function EntryEditor({
   const foods = useFoods()
   const index = useFoodIndex()
   const settings = useSettings()
+  const simple = useSimpleMode()
+  const acuteMode = !simple && !!settings?.acuteMode
   const recentIds = useRecentFoodIds()
   const [form, setForm] = useState<FormState>(() => ({
     date: entry?.date ?? date,
@@ -116,7 +119,7 @@ function EntryEditor({
   const quantity = showQuantity ? parseQuantity(form.quantity) : undefined
 
   const warnings = useMemo(() => {
-    if (!index || !settings || !weekEntries || !form.name.trim()) return []
+    if (simple || !index || !settings || !weekEntries || !form.name.trim()) return []
     return evaluateEntry({
       draft: {
         id: entry?.id,
@@ -131,9 +134,9 @@ function EntryEditor({
       weekEntries,
       index,
       limits: settings.limits,
-      acuteMode: settings.acuteMode,
+      acuteMode,
     })
-  }, [index, settings, weekEntries, form, quantity, food, entry?.id])
+  }, [simple, index, settings, weekEntries, form, quantity, food, entry?.id, acuteMode])
 
   async function pickFood(f: Food) {
     const last = await repo.entries.lastUse(f.id)
@@ -206,7 +209,8 @@ function EntryEditor({
       <FoodPicker
         foods={foods}
         recentIds={recentIds}
-        acuteMode={settings.acuteMode}
+        acuteMode={acuteMode}
+        simple={simple}
         onPick={pickFood}
         onFreeText={freeText}
       />
@@ -219,16 +223,19 @@ function EntryEditor({
         <div className="flex items-start gap-3 rounded-lg border bg-card p-3">
           <div className="min-w-0 flex-1 space-y-1.5">
             <p className="leading-snug font-medium">{food.name}</p>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <StatusBadge status={food.status} />
-              <AcuteBadge food={food} acuteMode={settings?.acuteMode} />
-              {food.maxPortion && (
-                <span className="text-xs text-muted-foreground">
-                  max {formatPortion(food.maxPortion)}
-                </span>
-              )}
-            </div>
-            {food.note && <p className="text-xs text-muted-foreground">{food.note}</p>}
+            {!simple && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <StatusBadge status={food.status} />
+                <AcuteBadge food={food} acuteMode={acuteMode} />
+                {food.maxPortion && (
+                  <span className="text-xs text-muted-foreground">
+                    max {formatPortion(food.maxPortion)}
+                  </span>
+                )}
+              </div>
+            )}
+            {/* Le note degli alimenti precaricati sono indicazioni del piano. */}
+            {food.note && (!simple || food.custom) && <p className="text-xs text-muted-foreground">{food.note}</p>}
           </div>
           <Button variant="outline" className="h-11 shrink-0" onClick={() => setStep('pick')}>
             <ArrowLeftRightIcon /> Cambia
@@ -247,8 +254,8 @@ function EntryEditor({
               placeholder="Es. al ristorante: riso con verdure grigliate, acqua"
             />
             <FieldDescription>
-              Testo libero, anche più cose insieme e, se vuoi, le quantità. Gli avvisi del piano
-              valgono solo per gli alimenti del database.
+              Testo libero, anche più cose insieme e, se vuoi, le quantità.
+              {!simple && ' Gli avvisi del piano valgono solo per gli alimenti del database.'}
             </FieldDescription>
           </Field>
           <Button variant="outline" className="h-11 w-full" onClick={() => setStep('pick')}>
@@ -262,22 +269,24 @@ function EntryEditor({
             Salva anche tra i miei alimenti
           </label>
           {form.saveAsFood && (
-            <div className="grid grid-cols-2 gap-3">
-              <Field>
-                <FieldLabel htmlFor="entry-new-status">Stato</FieldLabel>
-                <NativeSelect
-                  id="entry-new-status"
-                  className="w-full"
-                  value={form.newStatus}
-                  onChange={(e) => set('newStatus', e.target.value as FoodStatus)}
-                >
-                  {Object.entries(STATUS_LABEL).map(([id, label]) => (
-                    <NativeSelectOption key={id} value={id}>
-                      {label}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
-              </Field>
+            <div className={simple ? 'grid' : 'grid grid-cols-2 gap-3'}>
+              {!simple && (
+                <Field>
+                  <FieldLabel htmlFor="entry-new-status">Stato</FieldLabel>
+                  <NativeSelect
+                    id="entry-new-status"
+                    className="w-full"
+                    value={form.newStatus}
+                    onChange={(e) => set('newStatus', e.target.value as FoodStatus)}
+                  >
+                    {Object.entries(STATUS_LABEL).map(([id, label]) => (
+                      <NativeSelectOption key={id} value={id}>
+                        {label}
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                </Field>
+              )}
               <Field>
                 <FieldLabel htmlFor="entry-new-category">Categoria</FieldLabel>
                 <NativeSelect
@@ -327,7 +336,7 @@ function EntryEditor({
           </Field>
         </div>
       )}
-      {food?.maxPortion && (
+      {!simple && food?.maxPortion && (
         <Button
           variant="secondary"
           className="h-10"

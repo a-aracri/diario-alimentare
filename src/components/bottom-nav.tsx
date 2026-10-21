@@ -6,6 +6,7 @@ import {
   NotebookPenIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useSimpleMode } from '@/hooks/simple-mode'
 import { href } from '@/hooks/use-route'
 
 const TABS = [
@@ -16,18 +17,23 @@ const TABS = [
   { path: '/altro', label: 'Altro', icon: EllipsisIcon },
 ]
 
-const MAIN_PATHS = TABS.map((t) => t.path)
-
 export function BottomNav({ path }: { path: string }) {
+  // Le idee del piano non servono nel diario semplice.
+  const tabs = useSimpleMode() ? TABS.filter((t) => t.path !== '/idee') : TABS
   // Le pagine secondarie (integratori, alimenti, impostazioni…) stanno sotto "Altro".
-  const active = MAIN_PATHS.includes(path) ? path : '/altro'
+  const active = tabs.some((t) => t.path === path) ? path : '/altro'
   return (
     <nav
       aria-label="Navigazione principale"
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-backdrop-filter:bg-background/80 print:hidden"
     >
-      <div className="mx-auto grid max-w-2xl grid-cols-5 pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]">
-        {TABS.map(({ path: to, label, icon: Icon }) => {
+      <div
+        className={cn(
+          'mx-auto grid max-w-2xl pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]',
+          tabs.length === 5 ? 'grid-cols-5' : 'grid-cols-4',
+        )}
+      >
+        {tabs.map(({ path: to, label, icon: Icon }) => {
           const isActive = active === to
           return (
             <a

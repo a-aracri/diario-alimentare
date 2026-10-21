@@ -6,13 +6,14 @@ import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { useReportData, useSettings } from '@/hooks/use-data'
 import { usePreparedFile, type PreparedFile } from '@/hooks/use-prepared-file'
+import { useSimpleMode } from '@/hooks/simple-mode'
 import { navigate } from '@/hooks/use-route'
 import { addDays, dateRange, diffDays, today } from '@/lib/dates'
 import { shareFile, UTF8_BOM } from '@/lib/files'
 import { renderReportPdf } from '@/lib/pdf-report'
 import { buildCSV, reportSignature } from '@/lib/report'
 import { buildReportDocument, capitalize, periodLabel, reportFileName } from '@/lib/report-document'
-import type { ISODate, Settings } from '@/model/types'
+import type { ISODate } from '@/model/types'
 import { cn } from '@/lib/utils'
 import { FormDrawer } from './form-drawer'
 
@@ -23,12 +24,15 @@ interface ShareDiaryDrawerProps {
 
 /** Condivisione del diario per un periodo: PDF leggibile, anteprima di stampa o CSV. */
 export function ShareDiaryDrawer({ open, onOpenChange }: ShareDiaryDrawerProps) {
+  const simple = useSimpleMode()
   return (
     <FormDrawer
       open={open}
       onOpenChange={onOpenChange}
       title="Condividi il diario"
-      description="Scegli il periodo e invialo, ad esempio alla nutrizionista."
+      description={
+        simple ? 'Scegli il periodo e invialo o stampalo.' : 'Scegli il periodo e invialo, ad esempio alla nutrizionista.'
+      }
       className="max-h-[92dvh]"
     >
       <ShareDiaryForm />
@@ -53,17 +57,19 @@ function presets(t: ISODate, dietStart?: ISODate): (Range & { id: string; label:
 }
 
 /** Periodo proposto: dall'inizio della dieta se recente, altrimenti le ultime 2 settimane. */
-function defaultRange(t: ISODate, settings?: Settings): Range {
-  const start = settings?.dietStartDate
+function defaultRange(t: ISODate, start?: ISODate): Range {
   if (start && start <= t && diffDays(start, t) < 60) return { from: start, to: t }
   return { from: addDays(t, -13), to: t }
 }
 
 function ShareDiaryForm() {
   const settings = useSettings()
+  const simple = useSimpleMode()
+  // Nel diario semplice la data di inizio della dieta non conta.
+  const dietStart = simple ? undefined : settings?.dietStartDate
   const t = today()
   const [chosen, setChosen] = useState<Range | null>(null)
-  const range = chosen ?? defaultRange(t, settings)
+  const range = chosen ?? defaultRange(t, dietStart)
   const { from, to } = range
   const valid = from <= to
   const data = useReportData(from, to)
@@ -79,8 +85,10 @@ function ShareDiaryForm() {
 
   const csv = useMemo(() => {
     if (!valid || !data) return null
-    return new File([UTF8_BOM + buildCSV(data, from, to)], `${reportFileName(from, to)}.csv`, { type: 'text/csv' })
-  }, [valid, data, from, to])
+    return new File([UTF8_BOM + buildCSV(data, from, to, { simple })], `${reportFileName(from, to)}.csv`, {
+      type: 'text/csv',
+    })
+  }, [valid, data, from, to, simple])
 
   const counts = useMemo(() => {
     if (!data || !valid) return null
@@ -89,7 +97,7 @@ function ShareDiaryForm() {
     return `${days} ${days === 1 ? 'giorno' : 'giorni'} · ${data.entries.length} ${data.entries.length === 1 ? 'voce' : 'voci'} · ${symptoms} ${symptoms === 1 ? 'sintomo' : 'sintomi'}`
   }, [data, valid, from, to])
 
-  const options = presets(t, settings?.dietStartDate)
+  const options = presets(t, dietStart)
   const activePreset = options.find((p) => p.from === from && p.to === to)?.id
 
   return (

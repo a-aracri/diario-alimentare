@@ -92,7 +92,10 @@ export const CSV_HEADER = [
   'Note',
 ]
 
-export function buildCSV(data: ReportData, from: ISODate, to: ISODate): string {
+const STATUS_COLUMN = CSV_HEADER.indexOf('Stato alimento')
+
+/** CSV del periodo; nel diario semplice senza stato degli alimenti e senza integratori. */
+export function buildCSV(data: ReportData, from: ISODate, to: ISODate, { simple = false } = {}): string {
   const index = buildFoodIndex(data.foods)
   const rows: CSVCell[][] = [CSV_HEADER]
   for (const day of buildDayReports(data, from, to)) {
@@ -135,7 +138,7 @@ export function buildCSV(data: ReportData, from: ISODate, to: ISODate): string {
         ],
       })
     }
-    for (const t of day.supplementsTaken) {
+    for (const t of simple ? [] : day.supplementsTaken) {
       dayRows.push({
         time: t.time ?? '',
         row: [date, t.time, 'Integratore', null, t.name, null, null, null, null, null, null],
@@ -150,7 +153,7 @@ export function buildCSV(data: ReportData, from: ISODate, to: ISODate): string {
       rows.push([date, null, 'Nota del giorno', null, null, null, null, null, null, null, day.note])
     }
   }
-  return toCSV(rows)
+  return toCSV(simple ? rows.map((r) => r.filter((_, i) => i !== STATUS_COLUMN)) : rows)
 }
 
 export interface AdherenceLine {

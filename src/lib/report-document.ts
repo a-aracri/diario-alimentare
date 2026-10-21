@@ -218,7 +218,8 @@ function mergeEmptyDays(days: ReportDaySection[]): ReportDaySection[] {
 }
 
 export interface BuildOptions {
-  settings: Pick<Settings, 'limits' | 'dietStartDate'>
+  /** Con `simpleMode` il documento è un diario semplice: niente limiti, integratori, stati e dieta. */
+  settings: Pick<Settings, 'limits' | 'dietStartDate' | 'simpleMode'>
   /** Data di creazione del documento (default: oggi); i giorni successivi non contano. */
   createdOn?: ISODate
 }
@@ -230,6 +231,7 @@ export function buildReportDocument(
   { settings, createdOn = today() }: BuildOptions,
 ): ReportDocument {
   const limits: Limits = settings.limits
+  const simple = !!settings.simpleMode
   const index = buildFoodIndex(data.foods)
   const allDays = dateRange(from, to)
   const elapsedDays = allDays.filter((d) => d <= createdOn)
@@ -237,8 +239,9 @@ export function buildReportDocument(
   const sections: ReportDaySection[] = buildDayReports(data, from, to).map((day) => {
     const rows = sortForDay(day.entries).map((e): ReportRow => {
       const food = resolveFood(e, index)
-      const flag =
-        food?.status === 'evitare' || food?.status === 'verificare'
+      const flag = simple
+        ? undefined
+        : food?.status === 'evitare' || food?.status === 'verificare'
           ? STATUS_LABEL[food.status].toLowerCase()
           : exceedsPortion(e, food)
             ? `oltre la porzione, max ${formatPortion(food?.maxPortion)}`
@@ -262,7 +265,9 @@ export function buildReportDocument(
     })
     const hasStools = day.symptoms.some((s) => s.type === 'feci')
     const hasSymptoms = day.symptoms.some((s) => s.type !== 'feci')
-    const supplements = day.supplementsTaken.map((s) => (s.time ? `${s.name} alle ${s.time}` : s.name))
+    const supplements = simple
+      ? []
+      : day.supplementsTaken.map((s) => (s.time ? `${s.name} alle ${s.time}` : s.name))
     return {
       date: day.date,
       title: `${capitalize(formatLong(day.date))} ${parseISODate(day.date).getFullYear()}`,
@@ -278,26 +283,29 @@ export function buildReportDocument(
 
   // Limiti sulla settimana intera (lunedì–domenica), anche oltre i bordi del periodo:
   // uova e latticini hanno limiti settimanali. Le settimane senza alimenti si saltano.
+  // Il diario semplice non ha limiti.
   const weekSource = data.weekEntries ?? data.entries
   const weeks: ReportWeek[] = []
-  for (let start = weekStart(from); start <= to; start = addDays(start, 7)) {
-    const end = addDays(start, 6)
-    const entries = weekSource.filter((x) => x.date >= start && x.date <= end)
-    if (!entries.length) continue
-    const notes: string[] = []
-    if (start < from || end > to) {
-      notes.push(
-        data.weekEntries
-          ? 'conteggi sull’intera settimana, anche fuori dal periodo del diario'
-          : 'conteggi solo sui giorni del periodo',
-      )
+  if (!simple) {
+    for (let start = weekStart(from); start <= to; start = addDays(start, 7)) {
+      const end = addDays(start, 6)
+      const entries = weekSource.filter((x) => x.date >= start && x.date <= end)
+      if (!entries.length) continue
+      const notes: string[] = []
+      if (start < from || end > to) {
+        notes.push(
+          data.weekEntries
+            ? 'conteggi sull’intera settimana, anche fuori dal periodo del diario'
+            : 'conteggi solo sui giorni del periodo',
+        )
+      }
+      if (end > createdOn) notes.push('settimana non ancora conclusa')
+      weeks.push({
+        title: `Settimana ${periodLabel(start, end)}`,
+        note: notes.length ? `${capitalize(notes.join('; '))}.` : undefined,
+        lines: adherenceLines(weekAdherence(entries, index, limits), limits),
+      })
     }
-    if (end > createdOn) notes.push('settimana non ancora conclusa')
-    weeks.push({
-      title: `Settimana ${periodLabel(start, end)}`,
-      note: notes.length ? `${capitalize(notes.join('; '))}.` : undefined,
-      lines: adherenceLines(weekAdherence(entries, index, limits), limits),
-    })
   }
 
   const mealDays = sections.filter((d) => d.rows.length && d.date <= createdOn).length
@@ -316,11 +324,11 @@ export function buildReportDocument(
         ]
       : []),
     ...symptomsSummary(data),
-    ...supplementsSummary(data, allDays, createdOn),
+    ...(simple ? [] : supplementsSummary(data, allDays, createdOn)),
   ]
 
   const meta: string[] = []
-  if (settings.dietStartDate) {
+  if (settings.dietStartDate && !simple) {
     const day = diffDays(settings.dietStartDate, from) + 1
     meta.push(
       `Inizio della dieta: ${formatFull(settings.dietStartDate)}` +
@@ -330,7 +338,7 @@ export function buildReportDocument(
   meta.push(`Creato il ${formatFull(createdOn)}`)
 
   return {
-    title: 'Diario alimentare – dieta Low FODMAP',
+    title: simple ? 'Diario alimentare' : 'Diario alimentare – dieta Low FODMAP',
     period: capitalize(periodLabel(from, to)),
     meta,
     summary,

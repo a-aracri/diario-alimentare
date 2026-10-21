@@ -194,6 +194,14 @@ describe('backup', () => {
     expect(await db.foods.count()).toBe(SEED_FOODS.length)
   })
 
+  it('cancellando tutto il diario semplice resta attivo', async () => {
+    await repo.settings.update({ simpleMode: true, dietStartDate: '2026-10-01' })
+    await repo.backup.clearAll()
+    const settings = await repo.settings.get()
+    expect(settings.simpleMode).toBe(true)
+    expect(settings.dietStartDate).toBeUndefined()
+  })
+
   it('ripristina un backup della versione 1, senza lista della spesa', async () => {
     await repo.shopping.setStatus('riso', 'serve')
     const backup = await repo.backup.export()

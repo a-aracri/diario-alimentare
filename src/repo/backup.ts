@@ -81,10 +81,15 @@ export async function restoreBackup(file: BackupFile): Promise<void> {
   await ensureSeed()
 }
 
-/** Cancella tutti i dati e ricarica il database alimenti predefinito. */
+/**
+ * Cancella tutti i dati e ricarica il database alimenti predefinito. Il diario
+ * semplice resta attivo: su quel telefono il piano non deve ricomparire.
+ */
 export async function clearAllData(): Promise<void> {
+  const simpleMode = (await db.settings.get('app'))?.simpleMode
   await db.transaction('rw', TABLES.map((t) => db.table(t)), async () => {
     for (const t of TABLES) await db.table(t).clear()
   })
   await ensureSeed()
+  if (simpleMode) await db.settings.update('app', { simpleMode })
 }

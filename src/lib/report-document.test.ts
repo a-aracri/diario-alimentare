@@ -3,7 +3,7 @@ import { entry, foods, limits } from '@/test/fixtures'
 import type { DayLog, Supplement, SupplementLog, Symptom } from '@/model/types'
 import { pdfText, renderReportPdf } from './pdf-report'
 import { buildReportDocument, periodLabel, reportFileName } from './report-document'
-import { reportSignature, type ReportData } from './report'
+import { buildCSV, reportSignature, type ReportData } from './report'
 
 const symptom = (s: Partial<Symptom> & Pick<Symptom, 'date' | 'type'>): Symptom => ({
   id: `${s.date}-${s.type}-${s.time ?? ''}`,
@@ -144,6 +144,38 @@ describe('buildReportDocument', () => {
     expect(line('latticini').detail).toBe('0 volte (limite 1 volta a settimana)')
     expect(line('frutta').detail).toBe('Sempre entro il limite (1 per spuntino)')
     expect(line('evitare').detail).toBe('Aglio')
+  })
+})
+
+describe('diario semplice', () => {
+  const simpleData = data({
+    entries: [
+      entry({ date: '2026-10-05', foodId: 'aglio', time: '13:05' }),
+      entry({ date: '2026-10-05', foodId: 'zucchine', quantity: 100, unit: 'g', time: '13:10' }),
+    ],
+    supplements: [probiotico],
+    supplementLogs: [log('probiotico', '2026-10-05', '21:30')],
+  })
+  const doc = buildReportDocument(simpleData, '2026-10-05', '2026-10-11', {
+    settings: { ...settings, simpleMode: true },
+    createdOn: '2026-10-12',
+  })
+
+  it('senza dieta, limiti, integratori e segnalazioni', () => {
+    expect(doc.title).toBe('Diario alimentare')
+    expect(doc.meta).toEqual(['Creato il 12/10/2026'])
+    expect(doc.weeks).toEqual([])
+    expect(doc.days[0].rows.map((r) => r.flag)).toEqual([undefined, undefined])
+    expect(doc.days[0].supplements).toEqual([])
+    expect(doc.summary.map((l) => l.label)).not.toContain('Probiotico')
+  })
+
+  it('CSV senza stato degli alimenti e senza integratori', () => {
+    const [header, ...rows] = buildCSV(simpleData, '2026-10-05', '2026-10-05', { simple: true }).split('\r\n')
+    expect(header).not.toContain('Stato alimento')
+    expect(rows.join('\n')).not.toContain('Integratore')
+    expect(rows[0].split(';')).toHaveLength(header.split(';').length)
+    expect(buildCSV(simpleData, '2026-10-05', '2026-10-05')).toContain('Integratore')
   })
 })
 

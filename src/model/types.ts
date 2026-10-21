@@ -231,6 +231,11 @@ export interface Settings {
   dietStartDate?: ISODate
   limits: Limits
   acuteMode: boolean
+  /**
+   * Diario semplice, per chi non segue il piano: nasconde limiti, integratori,
+   * stati e indicazioni degli alimenti e le pagine del piano.
+   */
+  simpleMode?: boolean
   reintroGroups: string[]
   lastBackupAt?: string
   /** Quando il promemoria del backup è stato rimandato con "Non ora". */

@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { DEFAULT_LIMITS } from '@/data/piano'
+import { useSimpleMode } from '@/hooks/simple-mode'
 import { useSettings } from '@/hooks/use-data'
 import { navigate } from '@/hooks/use-route'
 import { diffDays, formatDateTime, today } from '@/lib/dates'
@@ -37,6 +38,7 @@ const LIMIT_FIELDS: { key: keyof Limits; label: string; hint: string }[] = [
 
 export function SettingsPage() {
   const settings = useSettings()
+  const simple = useSimpleMode()
   const { theme, setTheme } = useTheme()
   const fileInput = useRef<HTMLInputElement>(null)
   const [pending, setPending] = useState<BackupFile | null>(null)
@@ -66,61 +68,84 @@ export function SettingsPage() {
 
   return (
     <Page title="Impostazioni" back="/altro">
+      {!simple && (
+        <>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle className="text-base">Dieta</CardTitle>
+              {dietDay && dietDay > 0 && <CardDescription>Oggi è il giorno {dietDay}.</CardDescription>}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Field>
+                <FieldLabel htmlFor="diet-start">Data di inizio</FieldLabel>
+                <Input
+                  id="diet-start"
+                  type="date"
+                  value={settings.dietStartDate ?? ''}
+                  onChange={(e) => repo.settings.update({ dietStartDate: e.target.value || undefined })}
+                />
+              </Field>
+              <label className="flex min-h-11 cursor-pointer items-center justify-between gap-4">
+                <span>
+                  <span className="block text-sm font-medium">Fase acuta gastrite/reflusso</span>
+                  <span className="block text-xs text-muted-foreground">Evidenzia gli alimenti sconsigliati.</span>
+                </span>
+                <Switch
+                  checked={settings.acuteMode}
+                  onCheckedChange={(checked) => repo.settings.update({ acuteMode: checked })}
+                  className="scale-125"
+                />
+              </label>
+            </CardContent>
+          </Card>
+
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle className="text-base">Limiti</CardTitle>
+              <CardDescription>Modificali se la nutrizionista cambia le indicazioni.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {LIMIT_FIELDS.map((f) => (
+                <LimitInput
+                  key={`${f.key}-${settings.limits[f.key]}`}
+                  id={`limit-${f.key}`}
+                  label={f.label}
+                  hint={f.hint}
+                  value={settings.limits[f.key]}
+                  onChange={(value) => repo.settings.update({ limits: { ...settings.limits, [f.key]: value } })}
+                />
+              ))}
+              <Button
+                variant="outline"
+                className="h-11 w-full"
+                onClick={async () => {
+                  await repo.settings.update({ limits: { ...DEFAULT_LIMITS } })
+                  toast.success('Limiti del piano ripristinati')
+                }}
+              >
+                Ripristina i valori del piano
+              </Button>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
       <Card size="sm">
-        <CardHeader>
-          <CardTitle className="text-base">Dieta</CardTitle>
-          {dietDay && dietDay > 0 && <CardDescription>Oggi è il giorno {dietDay}.</CardDescription>}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Field>
-            <FieldLabel htmlFor="diet-start">Data di inizio</FieldLabel>
-            <Input
-              id="diet-start"
-              type="date"
-              value={settings.dietStartDate ?? ''}
-              onChange={(e) => repo.settings.update({ dietStartDate: e.target.value || undefined })}
-            />
-          </Field>
+        <CardContent>
           <label className="flex min-h-11 cursor-pointer items-center justify-between gap-4">
             <span>
-              <span className="block text-sm font-medium">Fase acuta gastrite/reflusso</span>
-              <span className="block text-xs text-muted-foreground">Evidenzia gli alimenti sconsigliati.</span>
+              <span className="block text-sm font-medium">Diario semplice</span>
+              <span className="block text-xs text-muted-foreground">
+                Per chi non segue la dieta: solo diario e sintomi, senza limiti, integratori, indicazioni
+                sugli alimenti, idee, lista della spesa e reintroduzione. I dati restano.
+              </span>
             </span>
             <Switch
-              checked={settings.acuteMode}
-              onCheckedChange={(checked) => repo.settings.update({ acuteMode: checked })}
+              checked={simple}
+              onCheckedChange={(checked) => repo.settings.update({ simpleMode: checked })}
               className="scale-125"
             />
           </label>
-        </CardContent>
-      </Card>
-
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle className="text-base">Limiti</CardTitle>
-          <CardDescription>Modificali se la nutrizionista cambia le indicazioni.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {LIMIT_FIELDS.map((f) => (
-            <LimitInput
-              key={`${f.key}-${settings.limits[f.key]}`}
-              id={`limit-${f.key}`}
-              label={f.label}
-              hint={f.hint}
-              value={settings.limits[f.key]}
-              onChange={(value) => repo.settings.update({ limits: { ...settings.limits, [f.key]: value } })}
-            />
-          ))}
-          <Button
-            variant="outline"
-            className="h-11 w-full"
-            onClick={async () => {
-              await repo.settings.update({ limits: { ...DEFAULT_LIMITS } })
-              toast.success('Limiti del piano ripristinati')
-            }}
-          >
-            Ripristina i valori del piano
-          </Button>
         </CardContent>
       </Card>
 
@@ -215,7 +240,9 @@ export function SettingsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Cancellare tutti i dati?</AlertDialogTitle>
             <AlertDialogDescription>
-              Diario, sintomi, integratori e test verranno eliminati; il database alimenti torna quello del piano.
+              {simple
+                ? 'Diario e sintomi verranno eliminati; il database alimenti torna quello iniziale.'
+                : 'Diario, sintomi, integratori e test verranno eliminati; il database alimenti torna quello del piano.'}{' '}
               Fai prima un backup se vuoi conservarli.
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useReportData, useSettings } from '@/hooks/use-data'
 import { href, useRoute } from '@/hooks/use-route'
 import { useSelectedDate } from '@/hooks/selected-date'
+import { useSimpleMode } from '@/hooks/simple-mode'
 import { addDays, formatLong, parseISODate, today, weekStart } from '@/lib/dates'
 import { buildFoodIndex } from '@/lib/foods'
 import { weekAdherence } from '@/lib/limits'
@@ -21,6 +22,7 @@ export function SummaryPage() {
   const { date } = useSelectedDate()
   const { params } = useRoute()
   const settings = useSettings()
+  const simple = useSimpleMode()
   const [from, setFrom] = useState(() => weekStart(date))
   const [sharing, setSharing] = useState(() => params.get('condividi') === '1')
 
@@ -71,28 +73,30 @@ export function SummaryPage() {
         )}
       </div>
 
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle className="text-base">Aderenza ai limiti</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2.5">
-            {view?.lines.map((l) => (
-              <li key={l.id} className="flex items-start gap-2.5">
-                {l.ok ? (
-                  <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                ) : (
-                  <TriangleAlertIcon className="mt-0.5 size-4 shrink-0 text-amber-500" />
-                )}
-                <span className="min-w-0">
-                  <span className="block text-sm font-medium">{l.label}</span>
-                  <span className="block text-xs text-muted-foreground">{l.detail}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      {!simple && (
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle className="text-base">Aderenza ai limiti</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2.5">
+              {view?.lines.map((l) => (
+                <li key={l.id} className="flex items-start gap-2.5">
+                  {l.ok ? (
+                    <CheckCircle2Icon className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  ) : (
+                    <TriangleAlertIcon className="mt-0.5 size-4 shrink-0 text-amber-500" />
+                  )}
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium">{l.label}</span>
+                    <span className="block text-xs text-muted-foreground">{l.detail}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       <SectionTitle>Giorno per giorno</SectionTitle>
       {view?.days.map((day) => {
@@ -132,7 +136,7 @@ export function SummaryPage() {
                     </span>
                   </p>
                 ))}
-                {day.supplementsTaken.length > 0 && (
+                {!simple && day.supplementsTaken.length > 0 && (
                   <p className="text-xs text-muted-foreground">
                     Integratori: {day.supplementsTaken.map((s) => s.name).join(', ')}
                   </p>
@@ -144,7 +148,7 @@ export function SummaryPage() {
         )
       })}
 
-      <SectionTitle>Per la nutrizionista</SectionTitle>
+      <SectionTitle>{simple ? 'Condividi' : 'Per la nutrizionista'}</SectionTitle>
       <Card size="sm">
         <CardHeader>
           <CardTitle className="text-base">Condividi il diario</CardTitle>

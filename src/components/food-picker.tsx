@@ -2,7 +2,7 @@ import { ChevronRightIcon, PencilLineIcon, SearchIcon, StarIcon, XIcon } from 'l
 import { Fragment, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { groupLabelAt, searchFoods, sortForList } from '@/lib/foods'
+import { groupLabelAt, searchFoods, sortByName, sortForList } from '@/lib/foods'
 import { formatPortion } from '@/lib/units'
 import { cn } from '@/lib/utils'
 import { CATEGORY_LABEL } from '@/model/constants'
@@ -14,18 +14,21 @@ interface FoodPickerProps {
   foods: Food[]
   recentIds: string[]
   acuteMode: boolean
+  /** Diario semplice: niente stati né porzioni, liste in ordine alfabetico. */
+  simple?: boolean
   onPick: (food: Food) => void
   onFreeText: (name: string) => void
 }
 
 /** Ricerca nel database alimenti con preferiti, recenti e categorie. */
-export function FoodPicker({ foods, recentIds, acuteMode, onPick, onFreeText }: FoodPickerProps) {
+export function FoodPicker({ foods, recentIds, acuteMode, simple, onPick, onFreeText }: FoodPickerProps) {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<FoodCategory | null>(null)
 
   const byId = useMemo(() => new Map(foods.map((f) => [f.id, f])), [foods])
   const results = useMemo(() => searchFoods(foods, query), [foods, query])
-  const favorites = useMemo(() => sortForList(foods.filter((f) => f.favorite)), [foods])
+  const sortList = simple ? sortByName : sortForList
+  const favorites = useMemo(() => sortList(foods.filter((f) => f.favorite)), [foods, sortList])
   const recents = useMemo(
     () =>
       recentIds
@@ -40,12 +43,12 @@ export function FoodPicker({ foods, recentIds, acuteMode, onPick, onFreeText }: 
     return (Object.keys(CATEGORY_LABEL) as FoodCategory[]).filter((c) => counts.get(c))
   }, [foods])
   const inCategory = useMemo(
-    () => (category ? sortForList(foods.filter((f) => f.category === category)) : []),
-    [foods, category],
+    () => (category ? sortList(foods.filter((f) => f.category === category)) : []),
+    [foods, category, sortList],
   )
 
   const row = (food: Food) => (
-    <FoodRow key={food.id} food={food} acuteMode={acuteMode} onPick={() => onPick(food)} />
+    <FoodRow key={food.id} food={food} acuteMode={acuteMode} simple={simple} onPick={() => onPick(food)} />
   )
   const trimmed = query.trim()
 
@@ -107,7 +110,7 @@ export function FoodPicker({ foods, recentIds, acuteMode, onPick, onFreeText }: 
             </Button>
             <h3 className="px-1 pb-1 text-sm font-medium">{CATEGORY_LABEL[category]}</h3>
             {inCategory.map((food, i) => {
-              const label = groupLabelAt(inCategory, i)
+              const label = simple ? undefined : groupLabelAt(inCategory, i)
               return (
                 <Fragment key={food.id}>
                   {label && (
@@ -180,7 +183,17 @@ export function FoodPicker({ foods, recentIds, acuteMode, onPick, onFreeText }: 
   )
 }
 
-function FoodRow({ food, acuteMode, onPick }: { food: Food; acuteMode: boolean; onPick: () => void }) {
+function FoodRow({
+  food,
+  acuteMode,
+  simple,
+  onPick,
+}: {
+  food: Food
+  acuteMode: boolean
+  simple?: boolean
+  onPick: () => void
+}) {
   return (
     <div className="flex items-center gap-1 rounded-lg hover:bg-muted">
       <button
@@ -189,13 +202,15 @@ function FoodRow({ food, acuteMode, onPick }: { food: Food; acuteMode: boolean; 
         className="flex min-h-12 min-w-0 flex-1 flex-col items-start justify-center gap-1 px-3 py-2 text-left"
       >
         <span className="text-sm leading-snug font-medium">{food.name}</span>
-        <span className="flex flex-wrap items-center gap-1.5">
-          <StatusBadge status={food.status} />
-          <AcuteBadge food={food} acuteMode={acuteMode} />
-          {food.maxPortion && (
-            <span className="text-xs text-muted-foreground">max {formatPortion(food.maxPortion)}</span>
-          )}
-        </span>
+        {!simple && (
+          <span className="flex flex-wrap items-center gap-1.5">
+            <StatusBadge status={food.status} />
+            <AcuteBadge food={food} acuteMode={acuteMode} />
+            {food.maxPortion && (
+              <span className="text-xs text-muted-foreground">max {formatPortion(food.maxPortion)}</span>
+            )}
+          </span>
+        )}
       </button>
       <Button
         variant="ghost"

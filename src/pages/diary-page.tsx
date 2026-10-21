@@ -12,6 +12,7 @@ import { SupplementsCard } from '@/components/supplements-card'
 import { Button } from '@/components/ui/button'
 import { useEntries, useFoodIndex, useSettings, useWeekEntries } from '@/hooks/use-data'
 import { useSelectedDate } from '@/hooks/selected-date'
+import { useSimpleMode } from '@/hooks/simple-mode'
 import { diffDays, guessMeal, nowTime, today } from '@/lib/dates'
 import { computeCounters } from '@/lib/limits'
 import { sortEntries } from '@/lib/report'
@@ -22,6 +23,7 @@ import { repo } from '@/repo'
 export function DiaryPage() {
   const { date, setDate } = useSelectedDate()
   const settings = useSettings()
+  const simple = useSimpleMode()
   const index = useFoodIndex()
   const entries = useEntries(date)
   const weekEntries = useWeekEntries(date)
@@ -37,11 +39,15 @@ export function DiaryPage() {
   }, [entries])
 
   const counters = useMemo(
-    () => (index && settings && weekEntries ? computeCounters(date, weekEntries, index, settings.limits) : []),
-    [date, weekEntries, index, settings],
+    () =>
+      !simple && index && settings && weekEntries
+        ? computeCounters(date, weekEntries, index, settings.limits)
+        : [],
+    [simple, date, weekEntries, index, settings],
   )
 
-  const dietDay = settings?.dietStartDate ? diffDays(settings.dietStartDate, date) + 1 : undefined
+  const dietDay = !simple && settings?.dietStartDate ? diffDays(settings.dietStartDate, date) + 1 : undefined
+  const acuteMode = !simple && !!settings?.acuteMode
 
   async function repeat(meal: MealId) {
     const n = await repo.entries.repeatFromPreviousDay(date, meal)
@@ -54,7 +60,13 @@ export function DiaryPage() {
   return (
     <Page
       title="Diario"
-      subtitle={dietDay && dietDay > 0 ? `Giorno ${dietDay} della dieta` : 'Diario alimentare Low FODMAP'}
+      subtitle={
+        dietDay && dietDay > 0
+          ? `Giorno ${dietDay} della dieta`
+          : simple
+            ? 'Diario alimentare'
+            : 'Diario alimentare Low FODMAP'
+      }
       actions={
         <Button
           size="icon"
@@ -68,16 +80,17 @@ export function DiaryPage() {
     >
       <DateNav date={date} onChange={setDate} />
       <BackupReminder />
-      {settings?.acuteMode && <AcuteBanner />}
-      <SupplementsCard date={date} />
+      {acuteMode && <AcuteBanner />}
+      {!simple && <SupplementsCard date={date} />}
 
       {MEALS.map((m) => (
         <MealSection
           key={m.id}
           meal={m.id}
           entries={byMeal.get(m.id) ?? []}
-          index={index}
-          acuteMode={!!settings?.acuteMode}
+          // Senza indice nessuna icona di stato (da evitare, porzione…): nel diario semplice non servono.
+          index={simple ? undefined : index}
+          acuteMode={acuteMode}
           onAdd={() => setDrawer({ open: true, meal: m.id })}
           onEdit={(entry) => setDrawer({ open: true, meal: entry.meal, entry })}
           onRepeat={() => repeat(m.id)}

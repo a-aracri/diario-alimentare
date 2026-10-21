@@ -157,6 +157,17 @@ Flusso: `pages/components → hooks/use-data.ts → repo → Dexie`. Le scrittur
 - Impaginazione: un giorno non si spezza se sta in una pagina; se si spezza, la pagina nuova
   ripete "giorno (continua)". Dopo modifiche al render, controlla con PDF di prova e `pdftotext`.
 
+### Diario semplice
+- `settings.simpleMode` (Impostazioni → "Diario semplice"): per chi non segue il piano, es. un
+  familiare sul suo telefono. Si legge con `useSimpleMode()` (`src/hooks/simple-mode.ts`); il valore
+  arriva da `App`, che aspetta le impostazioni prima di mostrare le pagine.
+- Nasconde contatori e avvisi, integratori, fase acuta, giorno della dieta, stati, porzioni e note
+  degli alimenti precaricati, la tab Idee e le pagine in `PLAN_ROUTES` (aprendole si torna al
+  Diario); nel riepilogo, nel PDF (`buildReportDocument`) e nel CSV (`buildCSV(…, { simple })`)
+  niente limiti, integratori e stati.
+- I dati del piano restano nel database: disattivandolo torna tutto. "Cancella tutti i dati" lo
+  mantiene attivo. Una nuova funzione legata al piano va nascosta anche qui.
+
 ## Sincronizzazione futura (es. Neon)
 
 L'app è local-first: IndexedDB resta la fonte per la UI. Per sincronizzare:
