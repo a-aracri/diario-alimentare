@@ -95,6 +95,11 @@ export const SEED_FOODS: SeedFood[] = [
     note: 'Con farine consentite (riso, mais, quinoa…). Porzione 100 g.',
     aliases: ['pasta di riso', 'pasta di mais', 'pasta di quinoa', 'spaghetti', 'penne'],
   }),
+  ok('Cous cous senza glutine', 'cereali', {
+    max: [100, 'g'],
+    note: 'Con farine consentite (mais, riso…). Porzione 100 g.',
+    aliases: ['couscous senza glutine'],
+  }),
   ok('Pane senza glutine', 'cereali', {
     max: [100, 'g'],
     note: `Con farine consentite. Porzione 100 g. Va bene anche confezionato: controlla che in etichetta non ci siano ${POLIOLI}.`,

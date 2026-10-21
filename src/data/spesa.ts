@@ -139,6 +139,7 @@ export const SEED_SHOPPING: SeedShoppingItem[] = [
 
   ...foods('pane-pasta', [
     'pasta-senza-glutine',
+    'cous-cous-senza-glutine',
     'riso',
     'riso-selvatico',
     'quinoa',
