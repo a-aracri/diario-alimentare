@@ -174,6 +174,16 @@ export const SEED_FOODS: SeedFood[] = [
   lim('Latte delattosato', 'latticini', { note: DELATTOSATI, tags: ['latticino-delattosato'] }),
   lim('Mozzarella delattosata', 'latticini', { note: DELATTOSATI, tags: ['latticino-delattosato'] }),
   lim('Formaggio delattosato', 'latticini', { note: DELATTOSATI, tags: ['latticino-delattosato'] }),
+  lim('Parmigiano', 'latticini', {
+    note: `Stagionato, naturalmente senza lattosio. ${DELATTOSATI}`,
+    tags: ['latticino-delattosato'],
+    aliases: ['parmigiano reggiano'],
+  }),
+  lim('Pecorino', 'latticini', {
+    note: `Solo stagionato (il fresco ha lattosio). ${DELATTOSATI}`,
+    tags: ['latticino-delattosato'],
+    aliases: ['pecorino romano'],
+  }),
   no('Latte vaccino', 'latticini', { aliases: ['latte', 'latte di mucca'] }),
   no('Latte di capra', 'latticini'),
   no('Latte di pecora', 'latticini'),
