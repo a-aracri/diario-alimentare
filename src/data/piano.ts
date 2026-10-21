@@ -202,7 +202,7 @@ export const SUGGESTIONS: Suggestion[] = [
     id: 'spuntino-yogurt',
     kind: 'spuntino',
     title: 'Yogurt delattosato',
-    description: 'Anche greco. Conta per i latticini delattosati della settimana.',
+    description: 'Anche greco. Negli spuntini non conta per i latticini della settimana (max 150 g).',
     items: [
       {
         choices: [

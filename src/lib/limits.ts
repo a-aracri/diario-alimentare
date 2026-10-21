@@ -3,7 +3,7 @@
  * delattosati a settimana, frutti per spuntino. Funzioni pure, testate in
  * limits.test.ts.
  */
-import { SNACK_MEALS } from '@/model/constants'
+import { DAIRY_LIMIT_MEALS, SNACK_MEALS } from '@/model/constants'
 import type { Entry, Food, FoodTag, ISODate, Limits, MealId } from '@/model/types'
 import { resolveFood, type FoodIndex } from './foods'
 import { convertQuantity, toEggs, toTablespoons } from './units'
@@ -31,12 +31,19 @@ export function eggCount(entries: Entry[], index: FoodIndex): number {
 
 const occasionKey = (e: Pick<Entry, 'date' | 'meal'>) => `${e.date}|${e.meal}`
 
+/** Il limite settimanale dei latticini delattosati conta solo pranzo e cena. */
+export function countsForDairyLimit(meal: MealId): boolean {
+  return DAIRY_LIMIT_MEALS.includes(meal)
+}
+
 /**
- * Volte in cui sono stati consumati latticini delattosati: più voci nello
- * stesso pasto dello stesso giorno contano come una volta sola.
+ * Volte in cui sono stati consumati latticini delattosati a pranzo o a cena
+ * (colazione, spuntini e fuori pasto non contano): più voci nello stesso pasto
+ * dello stesso giorno contano come una volta sola.
  */
 export function dairyOccasions(entries: Entry[], index: FoodIndex): number {
-  return new Set(withTag(entries, index, 'latticino-delattosato').map(occasionKey)).size
+  const counted = withTag(entries, index, 'latticino-delattosato').filter((e) => countsForDairyLimit(e.meal))
+  return new Set(counted.map(occasionKey)).size
 }
 
 /** Grammi di latticini delattosati per ogni pasto (chiave `data|pasto`). */

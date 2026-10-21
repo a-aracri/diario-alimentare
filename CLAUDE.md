@@ -118,7 +118,9 @@ Flusso: `pages/components → hooks/use-data.ts → repo → Dexie`. Le scrittur
   l'avviso in fase acuta.
 - Conversioni (`src/lib/units.ts`): g ≈ ml; 1 cucchiaio = 3 cucchiaini; olio 1 cucchiaio ≈ 10 g;
   1 uovo ≈ 55 g; quantità assente = 1 unità (1 cucchiaio d'olio, 1 uovo).
-- Latticini delattosati: più voci nello stesso pasto contano come una volta sola.
+- Latticini delattosati: nel limite settimanale contano solo pranzo e cena (`DAIRY_LIMIT_MEALS`),
+  non colazione, spuntini e fuori pasto; più voci nello stesso pasto contano come una volta sola.
+  Il limite dei grammi per porzione vale in tutti i pasti.
 - I limiti sono modificabili in Impostazioni (`settings.limits`); i valori del piano sono in
   `DEFAULT_LIMITS` (uova: 8 a settimana, comprese quelle a colazione).
 

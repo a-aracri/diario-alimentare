@@ -11,7 +11,8 @@ export function CountersCard({ counters }: { counters: Counter[] }) {
       <CardHeader>
         <CardTitle className="text-base">Limiti del piano</CardTitle>
         <CardDescription>
-          Uova e latticini contano da lunedì a domenica. Ricorda di registrare anche l’olio EVO.
+          Uova e latticini contano da lunedì a domenica (i latticini solo a pranzo e cena). Ricorda di
+          registrare anche l’olio EVO.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-2 gap-x-4 gap-y-3">

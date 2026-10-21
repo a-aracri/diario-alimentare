@@ -26,6 +26,7 @@ export interface SeedRevision {
 
 const ACUTA = 'Sconsigliato in fase acuta di gastrite/reflusso.'
 const POLIOLI = 'polioli (sorbitolo, mannitolo, maltitolo, xilitolo…)'
+const DELATTOSATI = '150 g, una volta a settimana.'
 
 export const SEED_REVISIONS: SeedRevision[] = [
   {
@@ -185,6 +186,53 @@ export const SEED_REVISIONS: SeedRevision[] = [
         note: 'Per la torta di mandorle e i pancake.',
       },
       { id: 'margarina', name: 'Margarina', section: 'dispensa' },
+    ],
+  },
+  {
+    // Latticini delattosati: nel limite settimanale contano solo pranzo e cena.
+    version: 5,
+    foods: [
+      {
+        id: 'yogurt-delattosato',
+        name: 'Yogurt delattosato',
+        category: 'latticini',
+        status: 'limite',
+        note: DELATTOSATI,
+        tags: ['latticino-delattosato'],
+      },
+      {
+        id: 'yogurt-greco-delattosato',
+        name: 'Yogurt greco delattosato',
+        category: 'latticini',
+        status: 'limite',
+        note: `Solo se delattosato. ${DELATTOSATI}`,
+        tags: ['latticino-delattosato'],
+        aliases: ['yogurt greco'],
+      },
+      {
+        id: 'latte-delattosato',
+        name: 'Latte delattosato',
+        category: 'latticini',
+        status: 'limite',
+        note: DELATTOSATI,
+        tags: ['latticino-delattosato'],
+      },
+      {
+        id: 'mozzarella-delattosata',
+        name: 'Mozzarella delattosata',
+        category: 'latticini',
+        status: 'limite',
+        note: DELATTOSATI,
+        tags: ['latticino-delattosato'],
+      },
+      {
+        id: 'formaggio-delattosato',
+        name: 'Formaggio delattosato',
+        category: 'latticini',
+        status: 'limite',
+        note: DELATTOSATI,
+        tags: ['latticino-delattosato'],
+      },
     ],
   },
 ]

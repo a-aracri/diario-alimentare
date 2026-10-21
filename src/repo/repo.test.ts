@@ -100,6 +100,17 @@ describe('correzioni dei dati precaricati', () => {
     expect(await repo.foods.get('tahina')).toMatchObject({ maxPortion: { amount: 11, unit: 'g' } })
   })
 
+  it('aggiorna la nota dei latticini delattosati solo se non modificata', async () => {
+    const v5 = SEED_REVISIONS.find((r) => r.version === 5)!
+    const old = (id: string) => ({ ...v5.foods!.find((f) => f.id === id)!, updatedAt: '2026-10-01T00:00:00.000Z' })
+    await db.foods.put(old('yogurt-delattosato'))
+    await db.foods.put({ ...old('latte-delattosato'), note: 'quello senza zucchero' })
+    await repo.settings.update({ seedVersion: 4 })
+    await repo.init()
+    expect((await repo.foods.get('yogurt-delattosato'))?.note).toContain('negli spuntini non conta')
+    expect((await repo.foods.get('latte-delattosato'))?.note).toBe('quello senza zucchero')
+  })
+
   it('aggiorna l\'integratore mantenendo la data di inizio', async () => {
     const glutagenics = previous.supplements!.find((s) => s.id === 'glutagenics')!
     await db.supplements.put({ ...glutagenics, startDate: '2026-10-01', updatedAt: '2026-10-01T00:00:00.000Z' })

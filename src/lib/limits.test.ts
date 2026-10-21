@@ -48,11 +48,22 @@ describe('uova', () => {
 describe('latticini delattosati', () => {
   it('conta una volta per pasto anche con più voci', () => {
     const entries = [
-      entry({ foodId: 'yogurt-delattosato', meal: 'spuntino-mattina' }),
-      entry({ foodId: 'latte-delattosato', meal: 'spuntino-mattina' }),
+      entry({ foodId: 'mozzarella-delattosata', meal: 'pranzo' }),
+      entry({ foodId: 'formaggio-delattosato', meal: 'pranzo' }),
       entry({ foodId: 'mozzarella-delattosata', meal: 'cena', date: '2026-10-08' }),
     ]
     expect(dairyOccasions(entries, index)).toBe(2)
+  })
+
+  it('conta solo pranzo e cena, non colazione, spuntini e fuori pasto', () => {
+    const entries = [
+      entry({ foodId: 'latte-delattosato', meal: 'colazione' }),
+      entry({ foodId: 'yogurt-delattosato', meal: 'spuntino-mattina' }),
+      entry({ foodId: 'yogurt-greco-delattosato', meal: 'spuntino-pomeriggio' }),
+      entry({ foodId: 'yogurt-delattosato', meal: 'fuori-pasto' }),
+      entry({ foodId: 'mozzarella-delattosata', meal: 'cena' }),
+    ]
+    expect(dairyOccasions(entries, index)).toBe(1)
   })
 })
 

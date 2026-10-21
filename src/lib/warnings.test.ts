@@ -98,8 +98,19 @@ describe('evaluateEntry: limiti', () => {
   })
 
   it('latticini delattosati: avvisa alla seconda volta in settimana', () => {
-    const week = [entry({ foodId: 'yogurt-delattosato', meal: 'colazione', date: '2026-10-05' })]
-    expect(codes(draft('latte-delattosato', { meal: 'cena' }), week)).toEqual(['latticini-frequenza'])
+    const week = [entry({ foodId: 'mozzarella-delattosata', meal: 'pranzo', date: '2026-10-05' })]
+    expect(codes(draft('formaggio-delattosato', { meal: 'cena' }), week)).toEqual(['latticini-frequenza'])
+  })
+
+  it('latticini delattosati: colazione e spuntini non contano nella settimana', () => {
+    const week = [
+      entry({ foodId: 'mozzarella-delattosata', meal: 'pranzo', date: '2026-10-05' }),
+      entry({ foodId: 'yogurt-delattosato', meal: 'spuntino-mattina', date: '2026-10-06' }),
+    ]
+    expect(codes(draft('yogurt-delattosato', { meal: 'spuntino-pomeriggio' }), week)).toEqual([])
+    expect(codes(draft('latte-delattosato', { meal: 'colazione' }), week)).toEqual([])
+    const snacks = [entry({ foodId: 'yogurt-delattosato', meal: 'spuntino-mattina', date: '2026-10-05' })]
+    expect(codes(draft('mozzarella-delattosata', { meal: 'cena' }), snacks)).toEqual([])
   })
 
   it('latticini delattosati: nello stesso pasto non è una seconda volta', () => {

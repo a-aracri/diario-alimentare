@@ -149,12 +149,12 @@ describe('buildReportDocument', () => {
 
 describe('limiti sulla settimana intera', () => {
   // Venerdì 9/10: "Ultimi 7 giorni" va da sabato 3 a venerdì 9.
-  const yogurt = (date: string) => entry({ date, foodId: 'yogurt-delattosato', meal: 'colazione' })
+  const mozzarella = (date: string) => entry({ date, foodId: 'mozzarella-delattosata', meal: 'cena' })
 
   it('conta anche i giorni della settimana fuori dal periodo', () => {
-    const weekEntries = [yogurt('2026-09-28'), yogurt('2026-10-03')]
+    const weekEntries = [mozzarella('2026-09-28'), mozzarella('2026-10-03')]
     const d = buildReportDocument(
-      data({ entries: [yogurt('2026-10-03')], weekEntries }),
+      data({ entries: [mozzarella('2026-10-03')], weekEntries }),
       '2026-10-03',
       '2026-10-09',
       { settings, createdOn: '2026-10-09' },
@@ -167,7 +167,7 @@ describe('limiti sulla settimana intera', () => {
 
   it('segnala la settimana non ancora conclusa', () => {
     const d = buildReportDocument(
-      data({ entries: [yogurt('2026-10-06')], weekEntries: [yogurt('2026-10-06')] }),
+      data({ entries: [mozzarella('2026-10-06')], weekEntries: [mozzarella('2026-10-06')] }),
       '2026-10-05',
       '2026-10-09',
       { settings, createdOn: '2026-10-09' },

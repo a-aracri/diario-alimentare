@@ -26,6 +26,9 @@ export const MEAL_LABEL: Record<MealId, string> = Object.fromEntries(
 
 export const SNACK_MEALS: MealId[] = ['spuntino-mattina', 'spuntino-pomeriggio']
 
+/** Pasti che contano nel limite settimanale dei latticini delattosati. */
+export const DAIRY_LIMIT_MEALS: MealId[] = ['pranzo', 'cena']
+
 export const UNITS: { id: Unit; label: string; short: string }[] = [
   { id: 'g', label: 'grammi', short: 'g' },
   { id: 'ml', label: 'millilitri', short: 'ml' },

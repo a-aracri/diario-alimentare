@@ -6,6 +6,7 @@ import { ACUTE_TAG_LABEL } from '@/model/constants'
 import type { Entry, Food, Limits } from '@/model/types'
 import { resolveFood, type FoodIndex } from './foods'
 import {
+  countsForDairyLimit,
   dairyGramsByOccasion,
   dairyOccasions,
   eggCount,
@@ -123,11 +124,11 @@ export function evaluateEntry({
   if (hasTag(food, 'latticino-delattosato')) {
     const asEntry = { ...draft, id: draft.id ?? '__draft__', foodId: food.id } as Entry
     const occasions = dairyOccasions([...others, asEntry], index)
-    if (occasions > limits.dairyTimesPerWeek) {
+    if (countsForDairyLimit(draft.meal) && occasions > limits.dairyTimesPerWeek) {
       out.push({
         code: 'latticini-frequenza',
         level: 'warning',
-        message: `Latticini delattosati: sarebbe la ${occasions}ª volta in settimana (indicazione: ${limits.dairyTimesPerWeek} a settimana).`,
+        message: `Latticini delattosati: sarebbe la ${occasions}ª volta in settimana a pranzo o a cena (indicazione: ${limits.dairyTimesPerWeek} a settimana).`,
       })
     }
     const draftGrams =

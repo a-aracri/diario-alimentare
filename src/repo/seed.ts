@@ -14,7 +14,7 @@ import { nowISO } from './helpers'
  * (e i limiti) cambiano solo se corretti in src/data/seed-history.ts e non
  * modificati dall'utente.
  */
-export const SEED_VERSION = 4
+export const SEED_VERSION = 5
 
 /** Campi che vengono dal seed; gli altri (preferito, data di inizio…) sono dell'utente. */
 const FOOD_FIELDS = ['name', 'category', 'status', 'maxPortion', 'note', 'tags', 'aliases'] as const
