@@ -66,7 +66,9 @@ describe('colazioni del piano', () => {
 
   it('sono le opzioni A–E divise per categoria', () => {
     expect(colazioni.map((s) => `${s.group} ${s.title.split('.')[0]}`)).toEqual([
-      'Veloce A',
+      'Veloce A1',
+      'Veloce A2',
+      'Veloce A3',
       'Overnight B1',
       'Overnight B2',
       'Overnight B3',
@@ -90,7 +92,7 @@ describe('colazioni del piano', () => {
       }
       expect(eggs, s.id).toBe(s.eggs)
     }
-    expect(colazioni.map((s) => s.eggs)).toEqual([0, 0, 0, 0, 0, 1, 2, 2])
+    expect(colazioni.map((s) => s.eggs)).toEqual([0, 0, 0, 0, 0, 0, 0, 1, 2, 2])
   })
 
   it('usano solo alimenti consentiti, nelle porzioni del piano', () => {

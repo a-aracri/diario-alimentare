@@ -182,6 +182,7 @@ const teOTisana: SuggestionItem = {
 const bevandaRisoOCocco: SuggestionItem = {
   choices: [{ foodId: 'bevanda-di-riso' }, { foodId: 'bevanda-di-cocco' }],
 }
+const bevandaRiso: SuggestionItem = { choices: [{ foodId: 'bevanda-di-riso' }] }
 const chia: SuggestionItem = { choices: [{ foodId: 'semi-di-chia', quantity: 15, unit: 'g' }] }
 const gallette: SuggestionChoice = { foodId: 'gallette-di-riso-o-mais', quantity: 4, unit: 'pezzi' }
 const biscotti: SuggestionChoice = { foodId: 'biscotti-senza-glutine', quantity: 80, unit: 'g' }
@@ -239,7 +240,7 @@ export const SUGGESTIONS: Suggestion[] = [
     id: 'colazione-a-bevanda-e-biscotti',
     kind: 'colazione',
     group: 'Veloce',
-    title: 'A. Bevanda e biscotti',
+    title: 'A1. Bevanda e biscotti',
     ingredients: [
       '1 bicchiere di bevanda di riso o di cocco longlife',
       '80 g di biscotti senza glutine oppure 4–5 gallette di riso non integrali',
@@ -262,6 +263,39 @@ export const SUGGESTIONS: Suggestion[] = [
           { foodId: 'burro-di-mandorle-100', quantity: 15, unit: 'g' },
         ],
       },
+      teOTisana,
+    ],
+  },
+  {
+    id: 'colazione-a2-bevanda-gallette-e-marmellata',
+    kind: 'colazione',
+    group: 'Veloce',
+    title: 'A2. Bevanda di riso, gallette e marmellata',
+    ingredients: ['1 bicchiere di bevanda di riso', '4–5 gallette di riso non integrali', 'Un velo di marmellata'],
+    eggs: 0,
+    flags: [
+      {
+        level: 'warning',
+        text: 'Marmellata: controlla in etichetta che non ci siano polioli (es. sorbitolo, maltitolo), frequenti in quelle senza zucchero.',
+      },
+    ],
+    items: [bevandaRiso, { choices: [gallette] }, { choices: [{ foodId: 'marmellata' }] }, teOTisana],
+  },
+  {
+    id: 'colazione-a3-bevanda-gallette-e-burro-di-mandorle',
+    kind: 'colazione',
+    group: 'Veloce',
+    title: 'A3. Bevanda di riso, gallette e burro di mandorle',
+    ingredients: [
+      '1 bicchiere di bevanda di riso',
+      '4–5 gallette di riso non integrali',
+      '2 cucchiaini di burro di mandorle 100% (15 g)',
+    ],
+    eggs: 0,
+    items: [
+      bevandaRiso,
+      { choices: [gallette] },
+      { choices: [{ foodId: 'burro-di-mandorle-100', quantity: 15, unit: 'g' }] },
       teOTisana,
     ],
   },
