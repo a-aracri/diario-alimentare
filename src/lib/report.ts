@@ -37,6 +37,7 @@ export interface DayReport {
   date: ISODate
   entries: Entry[]
   symptoms: Symptom[]
+  /** Giornata senza sintomi (vedi `isSymptomFree`). */
   noSymptoms: boolean
   note?: string
   supplementsTaken: { name: string; time?: string }[]
@@ -58,17 +59,27 @@ export function symptomLabel(s: Symptom): string {
   return SYMPTOM_LABEL[s.type]
 }
 
+/**
+ * Una giornata conta come "nessun sintomo" se non ha sintomi registrati (le feci non
+ * contano) ma ha qualcosa nel diario: pasti, feci o una nota. I giorni senza dati restano
+ * vuoti, perché non si sa com'è andata. `noSymptoms` è il vecchio interruttore manuale.
+ */
+export function isSymptomFree(entries: Entry[], symptoms: Symptom[], log?: DayLog | null): boolean {
+  if (symptoms.some((s) => s.type !== 'feci')) return false
+  return entries.length > 0 || symptoms.length > 0 || !!log?.note || !!log?.noSymptoms
+}
+
 export function buildDayReports(data: ReportData, from: ISODate, to: ISODate): DayReport[] {
   const supplementName = new Map(data.supplements.map((s) => [s.id, s.name]))
   return dateRange(from, to).map((date) => {
     const log = data.dayLogs.find((d) => d.date === date)
+    const entries = sortEntries(data.entries.filter((e) => e.date === date))
+    const symptoms = data.symptoms.filter((s) => s.date === date).sort((a, b) => a.time.localeCompare(b.time))
     return {
       date,
-      entries: sortEntries(data.entries.filter((e) => e.date === date)),
-      symptoms: data.symptoms
-        .filter((s) => s.date === date)
-        .sort((a, b) => a.time.localeCompare(b.time)),
-      noSymptoms: !!log?.noSymptoms,
+      entries,
+      symptoms,
+      noSymptoms: isSymptomFree(entries, symptoms, log),
       note: log?.note,
       // Gli integratori eliminati non compaiono (resterebbe solo il loro id).
       supplementsTaken: data.supplementLogs

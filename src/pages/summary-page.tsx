@@ -121,7 +121,8 @@ export function SummaryPage() {
                     )}
                     {day.symptoms.map((s) => (
                       <Badge key={s.id} variant="outline">
-                        {s.time} {symptomLabel(s)} {s.type === 'feci' ? `· Bristol ${s.bristol}` : `· ${s.intensity}/10`}
+                        {s.time} {symptomLabel(s)}{' '}
+                        {s.type === 'feci' ? `· Bristol ${s.bristol}` : s.intensity != null && `· ${s.intensity}/10`}
                       </Badge>
                     ))}
                   </div>

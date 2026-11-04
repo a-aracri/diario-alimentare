@@ -58,10 +58,6 @@ function SymptomForm({
       toast.error('Scegli il tipo della scala di Bristol.')
       return
     }
-    if (!isStool && intensity == null) {
-      toast.error('Scegli l’intensità da 0 a 10.')
-      return
-    }
     await repo.symptoms.save({
       id: symptom?.id,
       createdAt: symptom?.createdAt,
@@ -150,7 +146,9 @@ function SymptomForm({
         <fieldset>
           <legend className="pb-2 text-sm font-medium">
             Intensità{' '}
-            {intensity != null && <span className="text-muted-foreground">— {intensity}/10</span>}
+            <span className="font-normal text-muted-foreground">
+              {intensity != null ? `— ${intensity}/10` : '(facoltativa)'}
+            </span>
           </legend>
           <div className="grid grid-cols-6 gap-2">
             {Array.from({ length: 11 }, (_, i) => (
@@ -160,7 +158,7 @@ function SymptomForm({
                 variant={intensity === i ? 'default' : 'outline'}
                 aria-pressed={intensity === i}
                 className="h-11 text-base tabular-nums"
-                onClick={() => setIntensity(i)}
+                onClick={() => setIntensity(intensity === i ? undefined : i)}
               >
                 {i}
               </Button>

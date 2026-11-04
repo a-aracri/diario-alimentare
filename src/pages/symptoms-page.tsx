@@ -1,14 +1,13 @@
+import { CheckCircle2Icon, CircleDashedIcon } from 'lucide-react'
 import { useState } from 'react'
-import { toast } from 'sonner'
 import { DateNav } from '@/components/date-nav'
 import { Page, SectionTitle } from '@/components/page'
 import { SymptomDrawer } from '@/components/symptom-drawer'
 import { Card, CardContent } from '@/components/ui/card'
-import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
-import { useDayLog, useSymptoms } from '@/hooks/use-data'
+import { useDayLog, useEntries, useSymptoms } from '@/hooks/use-data'
 import { useSelectedDate } from '@/hooks/selected-date'
-import { symptomLabel } from '@/lib/report'
+import { isSymptomFree, symptomLabel } from '@/lib/report'
 import { cn } from '@/lib/utils'
 import { BRISTOL, SYMPTOMS } from '@/model/constants'
 import type { ISODate, Symptom, SymptomType } from '@/model/types'
@@ -17,6 +16,7 @@ import { repo } from '@/repo'
 export function SymptomsPage() {
   const { date, setDate } = useSelectedDate()
   const symptoms = useSymptoms(date)
+  const entries = useEntries(date)
   const dayLog = useDayLog(date)
   const [drawer, setDrawer] = useState<{ open: boolean; type: SymptomType; symptom?: Symptom }>({
     open: false,
@@ -25,32 +25,32 @@ export function SymptomsPage() {
 
   const sorted = [...(symptoms ?? [])].sort((a, b) => a.time.localeCompare(b.time))
   const hasSymptoms = sorted.some((s) => s.type !== 'feci')
+  const loaded = symptoms !== undefined && entries !== undefined && dayLog !== undefined
+  const symptomFree = loaded && isSymptomFree(entries, symptoms, dayLog)
 
   return (
     <Page title="Sintomi" subtitle="Sintomi e feci, in qualsiasi momento">
       <DateNav date={date} onChange={setDate} />
 
-      <Card size="sm">
-        <CardContent>
-          <label className="flex min-h-11 cursor-pointer items-center justify-between gap-4">
+      {loaded && !hasSymptoms && (
+        <Card size="sm">
+          <CardContent className="flex min-h-11 items-center gap-3">
+            {symptomFree ? (
+              <CheckCircle2Icon className="size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            ) : (
+              <CircleDashedIcon className="size-5 shrink-0 text-muted-foreground" />
+            )}
             <span>
-              <span className="block font-medium">Nessun sintomo oggi</span>
+              <span className="block font-medium">Nessun sintomo</span>
               <span className="block text-xs text-muted-foreground">
-                {hasSymptoms ? 'Ci sono sintomi registrati in questa giornata.' : 'Registra una giornata tranquilla con un tocco.'}
+                {symptomFree
+                  ? 'La giornata conta come senza sintomi finché non ne registri uno.'
+                  : 'Conterà come senza sintomi appena registri un pasto o una nota.'}
               </span>
             </span>
-            <Switch
-              checked={!!dayLog?.noSymptoms}
-              disabled={hasSymptoms}
-              onCheckedChange={async (checked) => {
-                await repo.dayLogs.update(date, { noSymptoms: checked })
-                if (checked) toast.success('Segnato: nessun sintomo oggi')
-              }}
-              className="scale-125"
-            />
-          </label>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       <SectionTitle>Registra</SectionTitle>
       <div className="grid grid-cols-2 gap-2">
@@ -71,9 +71,7 @@ export function SymptomsPage() {
 
       <SectionTitle>Registrati in questa giornata</SectionTitle>
       {sorted.length === 0 ? (
-        <p className="px-1 text-sm text-muted-foreground">
-          {dayLog?.noSymptoms ? 'Nessun sintomo segnato.' : 'Ancora nulla.'}
-        </p>
+        <p className="px-1 text-sm text-muted-foreground">Ancora nulla.</p>
       ) : (
         <Card size="sm" className="py-1">
           <ul className="divide-y">
@@ -95,7 +93,7 @@ export function SymptomsPage() {
                     {s.note && <span className="block truncate text-xs text-muted-foreground">{s.note}</span>}
                   </span>
                   <span className="shrink-0 text-sm font-medium tabular-nums">
-                    {s.type === 'feci' ? `Bristol ${s.bristol}` : `${s.intensity}/10`}
+                    {s.type === 'feci' ? `Bristol ${s.bristol}` : s.intensity != null && `${s.intensity}/10`}
                   </span>
                 </button>
               </li>

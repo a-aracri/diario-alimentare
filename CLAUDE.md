@@ -124,6 +124,14 @@ Flusso: `pages/components → hooks/use-data.ts → repo → Dexie`. Le scrittur
 - I limiti sono modificabili in Impostazioni (`settings.limits`); i valori del piano sono in
   `DEFAULT_LIMITS` (uova: 8 a settimana, comprese quelle a colazione).
 
+### Sintomi
+- Una giornata senza sintomi registrati (le feci non contano) è "Nessun sintomo" da sola, se ha
+  pasti, feci o una nota; i giorni senza dati restano vuoti. La regola è `isSymptomFree` in
+  `src/lib/report.ts` (pagina Sintomi, riepilogo, PDF, CSV). `dayLogs.noSymptoms` è il vecchio
+  interruttore manuale: non si imposta più, ma vale ancora per i dati già salvati.
+- L'intensità (0–10) è facoltativa; la scala di Bristol per le feci resta obbligatoria. Media e
+  massima nel riepilogo si calcolano solo sulle volte in cui l'intensità è indicata.
+
 ### Colazioni e altre idee del piano
 - `SUGGESTIONS` in `src/data/piano.ts`, pagina `#/idee`. Le colazioni hanno categoria (`group`:
   Veloce, Overnight, Con cottura, Salata), `ingredients` con i grammi, `eggs` (uova usate),

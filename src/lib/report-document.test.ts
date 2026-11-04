@@ -147,6 +147,53 @@ describe('buildReportDocument', () => {
   })
 })
 
+describe('sintomi', () => {
+  const symptomData = data({
+    entries: [
+      entry({ date: '2026-10-05', foodId: 'riso', time: '13:00' }),
+      entry({ date: '2026-10-06', foodId: 'riso', time: '13:00' }),
+    ],
+    symptoms: [
+      symptom({ date: '2026-10-06', type: 'gonfiore', time: '15:00', note: 'dopo pranzo' }),
+      symptom({ date: '2026-10-07', type: 'gonfiore', intensity: 4, time: '16:00' }),
+      symptom({ date: '2026-10-07', type: 'nausea', time: '17:00' }),
+      symptom({ date: '2026-10-08', type: 'feci', bristol: 4, time: '08:00' }),
+    ],
+    dayLogs: [{ date: '2026-10-09', note: 'stanchezza', updatedAt: '' } satisfies DayLog],
+  })
+  const doc = buildReportDocument(symptomData, '2026-10-05', '2026-10-11', { settings, createdOn: '2026-10-12' })
+
+  it('senza sintomi registrati la giornata è "nessun sintomo", se c’è qualcosa nel diario', () => {
+    // 5: solo pasti; 6 e 7: sintomi; 8: solo feci; 9: solo una nota; 10–11: vuoti.
+    expect(doc.days.map((d) => [d.title, d.noSymptoms])).toEqual([
+      ['Lunedì 5 ottobre 2026', true],
+      ['Martedì 6 ottobre 2026', false],
+      ['Mercoledì 7 ottobre 2026', false],
+      ['Giovedì 8 ottobre 2026', true],
+      ['Venerdì 9 ottobre 2026', true],
+      ["Dal 10 all'11 ottobre 2026", false],
+    ])
+    expect(doc.summary).toContainEqual({ label: 'Giorni con sintomi', value: '2 su 5 giorni compilati' })
+  })
+
+  it('l’intensità è facoltativa', () => {
+    expect(doc.days[1].symptoms).toEqual(['15:00 – Gonfiore – dopo pranzo'])
+    expect(doc.days[2].symptoms).toEqual(['16:00 – Gonfiore: intensità 4/10', '17:00 – Nausea'])
+    expect(doc.summary).toContainEqual({
+      label: 'Gonfiore',
+      value: '2 volte, intensità media 4/10 (massima 4, indicata 1 volta)',
+    })
+    expect(doc.summary).toContainEqual({ label: 'Nausea', value: '1 volta' })
+  })
+
+  it('CSV con la riga "Nessun sintomo" e l’intensità vuota', () => {
+    const csv = buildCSV(symptomData, '2026-10-05', '2026-10-07')
+    expect(csv).toContain('05/10/2026;;Giornata;;Nessun sintomo')
+    expect(csv).not.toContain('06/10/2026;;Giornata')
+    expect(csv).toContain('06/10/2026;15:00;Sintomo;;Gonfiore;;;;;;dopo pranzo')
+  })
+})
+
 describe('diario semplice', () => {
   const simpleData = data({
     entries: [

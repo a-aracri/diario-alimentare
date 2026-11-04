@@ -165,19 +165,25 @@ function supplementsSummary(data: ReportData, days: ISODate[], createdOn: ISODat
 
 function symptomsSummary(data: ReportData): ReportSummaryLine[] {
   const out: ReportSummaryLine[] = []
-  const byType = new Map<string, number[]>()
+  // L'intensità è facoltativa: media e massima solo sulle volte in cui è indicata.
+  const byType = new Map<string, { count: number; values: number[] }>()
   for (const s of data.symptoms) {
     if (s.type === 'feci') continue
     const label = s.type === 'altro' ? symptomLabel(s) : SYMPTOM_LABEL[s.type as SymptomType]
-    byType.set(label, [...(byType.get(label) ?? []), s.intensity ?? 0])
+    const group = byType.get(label) ?? { count: 0, values: [] }
+    group.count += 1
+    if (s.intensity != null) group.values.push(s.intensity)
+    byType.set(label, group)
   }
-  for (const [label, values] of [...byType].sort((a, b) => b[1].length - a[1].length)) {
-    const avg = values.reduce((sum, v) => sum + v, 0) / values.length
-    const max = Math.max(...values)
-    out.push({
-      label,
-      value: `${plural(values.length, 'volta', 'volte')}, intensità media ${formatNumber(avg)}/10 (massima ${max})`,
-    })
+  for (const [label, { count, values }] of [...byType].sort((a, b) => b[1].count - a[1].count)) {
+    let value = plural(count, 'volta', 'volte')
+    if (values.length) {
+      const avg = values.reduce((sum, v) => sum + v, 0) / values.length
+      const max = Math.max(...values)
+      const partial = values.length < count ? `, indicata ${plural(values.length, 'volta', 'volte')}` : ''
+      value += `, intensità media ${formatNumber(avg)}/10 (massima ${max}${partial})`
+    }
+    out.push({ label, value })
   }
   const stools = data.symptoms.filter((s) => s.type === 'feci' && s.bristol)
   if (stools.length) {
@@ -261,7 +267,8 @@ export function buildReportDocument(
         const label = BRISTOL[(s.bristol ?? 1) - 1]?.label.toLowerCase()
         return `${s.time} – Feci: tipo ${s.bristol} della scala di Bristol (${label})${note}`
       }
-      return `${s.time} – ${symptomLabel(s)}: intensità ${s.intensity}/10${note}`
+      const intensity = s.intensity != null ? `: intensità ${s.intensity}/10` : ''
+      return `${s.time} – ${symptomLabel(s)}${intensity}${note}`
     })
     const hasStools = day.symptoms.some((s) => s.type === 'feci')
     const hasSymptoms = day.symptoms.some((s) => s.type !== 'feci')

@@ -14,7 +14,7 @@ export const symptomsRepo = {
     return db.symptoms.where('date').between(from, to, true, true).toArray()
   },
 
-  /** Salva un sintomo; se non sono feci, toglie "Nessun sintomo oggi". */
+  /** Salva un sintomo; se non sono feci, toglie l'eventuale "Nessun sintomo oggi" segnato a mano. */
   async save(input: SymptomInput): Promise<Symptom> {
     const now = nowISO()
     const symptom: Symptom = {

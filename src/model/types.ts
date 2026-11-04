@@ -111,7 +111,7 @@ export interface Symptom {
   date: ISODate
   time: TimeHM
   type: SymptomType
-  /** Intensità 0–10 (non usata per le feci). */
+  /** Intensità 0–10, facoltativa (non usata per le feci). */
   intensity?: number
   /** Scala di Bristol 1–7 (solo per le feci). */
   bristol?: number
@@ -125,6 +125,7 @@ export interface Symptom {
 /** Informazioni a livello di giornata. */
 export interface DayLog {
   date: ISODate
+  /** Vecchio interruttore "Nessun sintomo oggi": ora la giornata lo diventa da sola (isSymptomFree). */
   noSymptoms?: boolean
   note?: string
   updatedAt: string
