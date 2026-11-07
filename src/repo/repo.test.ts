@@ -111,6 +111,19 @@ describe('correzioni dei dati precaricati', () => {
     expect((await repo.foods.get('latte-delattosato'))?.note).toBe('quello senza zucchero')
   })
 
+  it('toglie parmigiano e pecorino dai latticini delattosati se non modificati', async () => {
+    const v8 = SEED_REVISIONS.find((r) => r.version === 8)!
+    const old = (id: string) => ({ ...v8.foods!.find((f) => f.id === id)!, updatedAt: '2026-10-01T00:00:00.000Z' })
+    await db.foods.put(old('parmigiano'))
+    await db.foods.put({ ...old('pecorino'), note: 'quello romano' })
+    await repo.settings.update({ seedVersion: 7 })
+    await repo.init()
+    const parmigiano = await repo.foods.get('parmigiano')
+    expect(parmigiano?.tags).toBeUndefined()
+    expect(parmigiano?.note).toContain('Non conta')
+    expect(await repo.foods.get('pecorino')).toMatchObject({ note: 'quello romano', tags: ['latticino-delattosato'] })
+  })
+
   it('aggiorna l\'integratore mantenendo la data di inizio', async () => {
     const glutagenics = previous.supplements!.find((s) => s.id === 'glutagenics')!
     await db.supplements.put({ ...glutagenics, startDate: '2026-10-01', updatedAt: '2026-10-01T00:00:00.000Z' })

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { entry, index, limits } from '@/test/fixtures'
 import {
   computeCounters,
+  dairyGramsByOccasion,
   dairyOccasions,
   eggCount,
   exceedsPortion,
@@ -64,6 +65,17 @@ describe('latticini delattosati', () => {
       entry({ foodId: 'mozzarella-delattosata', meal: 'cena' }),
     ]
     expect(dairyOccasions(entries, index)).toBe(1)
+  })
+
+  it('parmigiano e pecorino non contano, né per le volte né per i grammi', () => {
+    const entries = [
+      entry({ date: '2026-10-05', foodId: 'parmigiano', quantity: 10, unit: 'g', meal: 'pranzo' }),
+      entry({ date: '2026-10-06', foodId: 'pecorino', quantity: 10, unit: 'g', meal: 'cena' }),
+      entry({ date: '2026-10-07', foodId: 'mozzarella-delattosata', quantity: 150, unit: 'g', meal: 'cena' }),
+      entry({ date: '2026-10-07', foodId: 'parmigiano', quantity: 10, unit: 'g', meal: 'cena' }),
+    ]
+    expect(dairyOccasions(entries, index)).toBe(1)
+    expect(dairyGramsByOccasion(entries, index).get('2026-10-07|cena')).toBe(150)
   })
 })
 

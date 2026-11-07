@@ -120,7 +120,8 @@ Flusso: `pages/components → hooks/use-data.ts → repo → Dexie`. Le scrittur
   1 uovo ≈ 55 g; quantità assente = 1 unità (1 cucchiaio d'olio, 1 uovo).
 - Latticini delattosati: nel limite settimanale contano solo pranzo e cena (`DAIRY_LIMIT_MEALS`),
   non colazione, spuntini e fuori pasto; più voci nello stesso pasto contano come una volta sola.
-  Il limite dei grammi per porzione vale in tutti i pasti.
+  Il limite dei grammi per porzione vale in tutti i pasti. Parmigiano e pecorino stagionati non
+  hanno il tag `latticino-delattosato`: non contano né per le volte né per i grammi.
 - I limiti sono modificabili in Impostazioni (`settings.limits`); i valori del piano sono in
   `DEFAULT_LIMITS` (uova: 8 a settimana, comprese quelle a colazione).
 

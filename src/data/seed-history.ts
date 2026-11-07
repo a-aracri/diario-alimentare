@@ -27,6 +27,7 @@ export interface SeedRevision {
 const ACUTA = 'Sconsigliato in fase acuta di gastrite/reflusso.'
 const POLIOLI = 'polioli (sorbitolo, mannitolo, maltitolo, xilitolo…)'
 const DELATTOSATI = '150 g, una volta a settimana.'
+const DELATTOSATI_V7 = '150 g a porzione. A pranzo o a cena una volta a settimana; negli spuntini non conta.'
 
 export const SEED_REVISIONS: SeedRevision[] = [
   {
@@ -232,6 +233,30 @@ export const SEED_REVISIONS: SeedRevision[] = [
         status: 'limite',
         note: DELATTOSATI,
         tags: ['latticino-delattosato'],
+      },
+    ],
+  },
+  {
+    // Parmigiano e pecorino stagionati non contano nei latticini delattosati.
+    version: 8,
+    foods: [
+      {
+        id: 'parmigiano',
+        name: 'Parmigiano',
+        category: 'latticini',
+        status: 'limite',
+        note: `Stagionato, naturalmente senza lattosio. ${DELATTOSATI_V7}`,
+        tags: ['latticino-delattosato'],
+        aliases: ['parmigiano reggiano'],
+      },
+      {
+        id: 'pecorino',
+        name: 'Pecorino',
+        category: 'latticini',
+        status: 'limite',
+        note: `Solo stagionato (il fresco ha lattosio). ${DELATTOSATI_V7}`,
+        tags: ['latticino-delattosato'],
+        aliases: ['pecorino romano'],
       },
     ],
   },

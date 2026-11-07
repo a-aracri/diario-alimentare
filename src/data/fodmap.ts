@@ -65,6 +65,8 @@ const PESCE = 'Non trasformato, porzione 200 g.'
 const NOCI = 'Porzione indicata dal piano.'
 const FRUTTO = '1 frutto.'
 const DELATTOSATI = '150 g a porzione. A pranzo o a cena una volta a settimana; negli spuntini non conta.'
+/** Formaggi stagionati senza il tag dei latticini delattosati. */
+const NON_CONTA = 'Non conta nei latticini delattosati della settimana.'
 const ACUTA = 'Sconsigliato in fase acuta di gastrite/reflusso.'
 const POLIOLI = 'polioli (sorbitolo, mannitolo, maltitolo, xilitolo…)'
 const DA_PESARE = 'Solo se puoi pesarle: fuori casa, senza bilancia, evitale.'
@@ -180,13 +182,11 @@ export const SEED_FOODS: SeedFood[] = [
   lim('Mozzarella delattosata', 'latticini', { note: DELATTOSATI, tags: ['latticino-delattosato'] }),
   lim('Formaggio delattosato', 'latticini', { note: DELATTOSATI, tags: ['latticino-delattosato'] }),
   lim('Parmigiano', 'latticini', {
-    note: `Stagionato, naturalmente senza lattosio. ${DELATTOSATI}`,
-    tags: ['latticino-delattosato'],
+    note: `Stagionato, naturalmente senza lattosio. ${NON_CONTA}`,
     aliases: ['parmigiano reggiano'],
   }),
   lim('Pecorino', 'latticini', {
-    note: `Solo stagionato (il fresco ha lattosio). ${DELATTOSATI}`,
-    tags: ['latticino-delattosato'],
+    note: `Solo stagionato (il fresco ha lattosio). ${NON_CONTA}`,
     aliases: ['pecorino romano'],
   }),
   no('Latte vaccino', 'latticini', { aliases: ['latte', 'latte di mucca'] }),
