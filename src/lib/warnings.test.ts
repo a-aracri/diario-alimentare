@@ -133,6 +133,10 @@ describe('evaluateEntry: limiti', () => {
     expect(codes(draft('mirtilli', { meal: 'spuntino-pomeriggio' }), week)).toEqual([])
   })
 
+  it('frutta: più mandarini in una voce sono un frutto solo, senza avviso di porzione', () => {
+    expect(codes(draft('mandarino', { meal: 'spuntino-mattina', quantity: 3, unit: 'pezzi' }), [])).toEqual([])
+  })
+
   it('frutta: nessun limite per frutto fuori dagli spuntini', () => {
     const week = [entry({ foodId: 'kiwi', meal: 'pranzo' })]
     expect(codes(draft('mirtilli', { meal: 'pranzo' }), week)).toEqual([])
@@ -141,7 +145,7 @@ describe('evaluateEntry: limiti', () => {
   it('può restituire più avvisi insieme', () => {
     const week = [entry({ foodId: 'kiwi', meal: 'spuntino-mattina' })]
     expect(
-      codes(draft('arancia', { meal: 'spuntino-mattina', quantity: 2, unit: 'pezzi' }), week, true),
+      codes(draft('pompelmo', { meal: 'spuntino-mattina', quantity: 100, unit: 'g' }), week, true),
     ).toEqual(['acuta', 'porzione', 'frutta-spuntino'])
   })
 })

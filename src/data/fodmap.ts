@@ -63,7 +63,6 @@ const CEREALI = 'Porzione 100 g. Evitare gli integrali.'
 const CARNE = 'Non trasformata, porzione 150 g.'
 const PESCE = 'Non trasformato, porzione 200 g.'
 const NOCI = 'Porzione indicata dal piano.'
-const FRUTTO = '1 frutto.'
 const DELATTOSATI = '150 g a porzione. A pranzo o a cena una volta a settimana; negli spuntini non conta.'
 /** Formaggi stagionati senza il tag dei latticini delattosati. */
 const NON_CONTA = 'Non conta nei latticini delattosati della settimana.'
@@ -318,17 +317,14 @@ export const SEED_FOODS: SeedFood[] = [
   ok('Paprika', 'erbe'),
   ok('Vaniglia', 'erbe'),
 
-  // --- Frutta (1 frutto se non indicato) -----------------------------------
-  ok('Arancia', 'frutta', { max: [1, 'pezzi'], note: FRUTTO, tags: ['frutto', 'agrumi'] }),
-  ok('Clementine', 'frutta', {
-    max: [1, 'pezzi'],
-    note: FRUTTO,
-    tags: ['frutto', 'agrumi'],
-    aliases: ['clementina'],
-  }),
-  ok('Lime', 'frutta', { max: [1, 'pezzi'], note: FRUTTO, tags: ['frutto', 'agrumi'] }),
-  ok('Limone', 'frutta', { max: [1, 'pezzi'], note: FRUTTO, tags: ['frutto', 'agrumi'] }),
-  ok('Mandarino', 'frutta', { max: [1, 'pezzi'], note: FRUTTO, tags: ['frutto', 'agrumi'] }),
+  // --- Frutta ----------------------------------------------------------
+  // "1 frutto" vale per la categoria (un frutto per spuntino, vedi limits.ts). I frutti
+  // senza grammatura nel piano, come gli agrumi qui sotto, non hanno porzione massima.
+  ok('Arancia', 'frutta', { tags: ['frutto', 'agrumi'] }),
+  ok('Clementine', 'frutta', { tags: ['frutto', 'agrumi'], aliases: ['clementina'] }),
+  ok('Lime', 'frutta', { tags: ['frutto', 'agrumi'] }),
+  ok('Limone', 'frutta', { tags: ['frutto', 'agrumi'] }),
+  ok('Mandarino', 'frutta', { tags: ['frutto', 'agrumi'] }),
   lim('Pompelmo', 'frutta', { max: [80, 'g'], tags: ['frutto', 'agrumi'] }),
   lim('Ananas', 'frutta', { max: [140, 'g'], tags: ['frutto'] }),
   lim('Fragole', 'frutta', { max: [65, 'g'], tags: ['frutto'] }),

@@ -104,7 +104,12 @@ describe('porzione massima', () => {
     expect(exceedsPortion({}, broccoli)).toBe(false)
   })
   it('usa l’unità della porzione se l’unità manca', () => {
-    expect(exceedsPortion({ quantity: 2 }, index.byId.get('arancia'))).toBe(true)
+    expect(exceedsPortion({ quantity: 6 }, index.byId.get('gallette-di-riso-o-mais'))).toBe(true)
+  })
+  it('gli agrumi senza grammatura non hanno porzione massima', () => {
+    for (const id of ['arancia', 'clementine', 'lime', 'limone', 'mandarino']) {
+      expect(exceedsPortion({ quantity: 3, unit: 'pezzi' }, index.byId.get(id)), id).toBe(false)
+    }
   })
 })
 

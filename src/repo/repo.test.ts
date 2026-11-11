@@ -124,6 +124,19 @@ describe('correzioni dei dati precaricati', () => {
     expect(await repo.foods.get('pecorino')).toMatchObject({ note: 'quello romano', tags: ['latticino-delattosato'] })
   })
 
+  it('toglie la porzione di 1 frutto agli agrumi non modificati', async () => {
+    const v9 = SEED_REVISIONS.find((r) => r.version === 9)!
+    const old = (id: string) => ({ ...v9.foods!.find((f) => f.id === id)!, updatedAt: '2026-10-01T00:00:00.000Z' })
+    await db.foods.put(old('mandarino'))
+    await db.foods.put({ ...old('arancia'), note: 'solo a colazione' })
+    await repo.settings.update({ seedVersion: 8 })
+    await repo.init()
+    const mandarino = await repo.foods.get('mandarino')
+    expect(mandarino?.maxPortion).toBeUndefined()
+    expect(mandarino?.note).toBeUndefined()
+    expect(await repo.foods.get('arancia')).toMatchObject({ maxPortion: { amount: 1, unit: 'pezzi' } })
+  })
+
   it('aggiorna l\'integratore mantenendo la data di inizio', async () => {
     const glutagenics = previous.supplements!.find((s) => s.id === 'glutagenics')!
     await db.supplements.put({ ...glutagenics, startDate: '2026-10-01', updatedAt: '2026-10-01T00:00:00.000Z' })

@@ -122,6 +122,9 @@ Flusso: `pages/components → hooks/use-data.ts → repo → Dexie`. Le scrittur
   non colazione, spuntini e fuori pasto; più voci nello stesso pasto contano come una volta sola.
   Il limite dei grammi per porzione vale in tutti i pasti. Parmigiano e pecorino stagionati non
   hanno il tag `latticino-delattosato`: non contano né per le volte né per i grammi.
+- Frutta: "1 frutto" vale per la categoria (un frutto per spuntino; una voce = un frutto, anche con
+  più pezzi). La porzione massima c'è solo per i frutti con grammatura nel piano: gli agrumi senza
+  grammi (arancia, clementine, lime, limone, mandarino) non ne hanno.
 - I limiti sono modificabili in Impostazioni (`settings.limits`); i valori del piano sono in
   `DEFAULT_LIMITS` (uova: 8 a settimana, comprese quelle a colazione).
 
