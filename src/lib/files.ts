@@ -34,7 +34,9 @@ export async function shareFile(file: File): Promise<ShareResult> {
     if (sharing) return 'cancelled'
     sharing = true
     try {
-      await navigator.share({ files: [file], title: file.name })
+      // Solo il file, senza `title` né `text`: iOS li condivide come elemento a parte e
+      // "Salva su File" salverebbe anche un file di testo con il titolo.
+      await navigator.share({ files: [file] })
       return 'shared'
     } catch (err) {
       const name = (err as DOMException)?.name

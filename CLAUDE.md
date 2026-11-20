@@ -85,7 +85,8 @@ Flusso: `pages/components → hooks/use-data.ts → repo → Dexie`. Le scrittur
   parte direttamente dal tocco. Prepara il `File` in anticipo (`usePreparedFile` per il PDF,
   `useMemo` per CSV e backup) e nel gestore del tocco chiama subito `shareFile(file)`, senza
   `await` prima. `shareFile` ignora il doppio tocco e scarica il file dove la condivisione
-  non c'è (desktop).
+  non c'è (desktop). A `navigator.share` si passa solo `files`: con `title` o `text` iOS
+  aggiunge un elemento di testo e "Salva su File" salva due file.
 
 ### Dati e repository
 - Date locali `YYYY-MM-DD` e orari `HH:MM` (mai `toISOString()` per le date: è UTC). Usa
