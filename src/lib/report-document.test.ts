@@ -117,7 +117,7 @@ describe('buildReportDocument', () => {
       '21:00 – Gonfiore: intensità 6/10 – dopo cena',
     ])
     expect(doc.days[1].symptomsTitle).toBe('Sintomi e feci')
-    expect(doc.days[0].supplements).toEqual(['Probiotico alle 21:30'])
+    expect(doc.days[0].supplements).toEqual(['Probiotico'])
   })
 
   it('"nessun sintomo" con le sole feci non sembra una contraddizione', () => {

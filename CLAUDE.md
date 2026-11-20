@@ -164,6 +164,7 @@ Flusso: `pages/components → hooks/use-data.ts → repo → Dexie`. Le scrittur
   copre solo una parte: `useReportData` carica anche `weekEntries`. Le settimane senza alimenti
   si saltano; i giorni vuoti consecutivi si uniscono.
 - Oggi e i giorni futuri non contano come integratori "non presi".
+- Gli integratori presi compaiono solo con il nome, senza l'orario (il CSV invece lo mantiene).
 - Il testo nel PDF passa da `pdfText`: Helvetica (WinAnsi) copre lettere accentate e
   – — ‘ ’ “ ” … • €; il resto (emoji) viene tolto.
 - Impaginazione: un giorno non si spezza se sta in una pagina; se si spezza, la pagina nuova

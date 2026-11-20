@@ -272,9 +272,8 @@ export function buildReportDocument(
     })
     const hasStools = day.symptoms.some((s) => s.type === 'feci')
     const hasSymptoms = day.symptoms.some((s) => s.type !== 'feci')
-    const supplements = simple
-      ? []
-      : day.supplementsTaken.map((s) => (s.time ? `${s.name} alle ${s.time}` : s.name))
+    // Solo il nome dell'integratore: l'orario in cui è stato preso non serve nel diario condiviso.
+    const supplements = simple ? [] : day.supplementsTaken.map((s) => s.name)
     return {
       date: day.date,
       title: `${capitalize(formatLong(day.date))} ${parseISODate(day.date).getFullYear()}`,
